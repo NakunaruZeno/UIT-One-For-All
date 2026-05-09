@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>TKB Sinh Viên</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, sans-serif; background: #1e1e2e; color: #cdd6f4; margin: 0; padding: 20px; }
+        .container { max-width: 1200px; margin: auto; }
+        .header-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        button { background: #89b4fa; color: #11111b; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        button:hover { opacity: 0.9; }
+        
+        .alert-box { background: #f38ba8; color: #11111b; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: none; }
+        .alert-box a { color: #11111b; font-weight: bold; }
+        
+        /* Grid TKB */
+        .tkb-grid {
+            display: grid;
+            grid-template-columns: 120px repeat(6, 1fr);
+            grid-template-rows: 40px repeat(10, minmax(60px, auto));
+            gap: 2px; background: #45475a; border: 2px solid #45475a;
+        }
+        
+        .tkb-cell { background: #181825; padding: 5px; text-align: center; border-radius: 2px; }
+        .header-cell { background: #313244; font-weight: bold; display: flex; align-items: center; justify-content: center; }
+        .time-col { background: #313244; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.9em; }
+        
+        .class-card {
+            background: #f5f5f5; color: #111; padding: 8px; font-size: 0.85em;
+            border-left: 4px solid #89b4fa; border-radius: 4px; height: 100%; box-sizing: border-box;
+            display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;
+        }
+        .class-title { font-weight: bold; color: #1e66f5; margin-bottom: 4px; }
+        .class-room { color: #d20f39; font-weight: bold; }
+        
+        /* Hiệu ứng màu */
+        .ht1-card { border-left-color: #40a02b !important; } 
+        .makeup-card { border-left-color: #fab387 !important; background: #3e3135 !important; color: #fab387;}
+        .cancelled-card { border-left-color: #f38ba8 !important; background: #2d1e24 !important; text-decoration: line-through; opacity: 0.7; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="alert-container" class="alert-box">
+            <h3 style="margin: 0 0 10px 0;">⚠️ CẢNH BÁO TỪ PHÒNG ĐÀO TẠO</h3>
+            <ul id="alert-list" style="margin: 0;"></ul>
+            <button id="btn-clear-alerts" style="margin-top: 10px; background: #111; color:#fff;">Đã hiểu & Xóa cảnh báo</button>
+        </div>
+
+        <div class="header-controls">
+            <button id="btn-prev">⬅ Tuần Trước</button>
+            <h2 id="week-display">Tuần học: ...</h2>
+            <button id="btn-next">Tuần Sau ➡</button>
+        </div>
+
+        <div class="tkb-grid" id="tkb-grid">
+            <div class="header-cell">Thứ / Tiết</div>
+            <div class="header-cell">Thứ 2</div><div class="header-cell">Thứ 3</div>
+            <div class="header-cell">Thứ 4</div><div class="header-cell">Thứ 5</div>
+            <div class="header-cell">Thứ 6</div><div class="header-cell">Thứ 7</div>
+            
+            <script>
+                const times = ["(7:30 - 8:15)", "(8:15 - 9:00)", "(9:00 - 9:45)", "(10:00 - 10:45)", "(10:45 - 11:30)", "(13:00 - 13:45)", "(13:45 - 14:30)", "(14:30 - 15:15)", "(15:30 - 16:15)", "(16:15 - 17:00)"];
+                for(let i=1; i<=10; i++) {
+                    document.write(`<div class="time-col" style="grid-column: 1; grid-row: ${i+1}">Tiết ${i}<br>${times[i-1]}</div>`);
+                    for(let j=2; j<=7; j++) {
+                        document.write(`<div class="tkb-cell" style="grid-column: ${j}; grid-row: ${i+1}"></div>`);
+                    }
+                }
+            </script>
+            <div id="dynamic-classes" style="display: contents;"></div>
+        </div>
+    </div>
+    <script src="dashboard.js"></script>
+</body>
+</html>

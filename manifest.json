@@ -1,0 +1,36 @@
+{
+  "manifest_version": 3,
+  "name": "UIT One for All",
+  "version": "1.0",
+  "description": "Auto Login, Check Điểm, Cào TKB ICS và Cảnh báo Lịch học UIT",
+  "author": "NaruZeno",
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Cài đặt UIT Extension"
+  },
+  "permissions": [
+    "storage",
+    "alarms",
+    "notifications",
+    "tabs"
+  ],
+  "host_permissions": [
+    "*://student.uit.edu.vn/*",
+    "*://courses.uit.edu.vn/*",
+    "*://daa.uit.edu.vn/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://student.uit.edu.vn/*",
+        "*://courses.uit.edu.vn/*",
+        "*://daa.uit.edu.vn/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

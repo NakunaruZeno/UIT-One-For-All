@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Cài đặt tài khoản</title>
+    <style>
+        body { background: #1e1e2e; color: #cdd6f4; margin: 0; padding: 20px; font-family: sans-serif; width: 300px; }
+        h2 { margin: 0 0 20px 0; text-align: center; font-size: 20px; color: #f5c2e7; }
+        .input-group { margin-bottom: 15px; }
+        .input-group label { display: block; margin-bottom: 5px; font-size: 14px; }
+        .input-group input { width: 100%; padding: 10px; box-sizing: border-box; border: 1px solid #45475a; border-radius: 6px; background: #181825; color: #cdd6f4; font-size: 14px; }
+        .input-group input:focus { outline: none; border-color: #89b4fa; }
+        .button-group { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+        button { padding: 10px 15px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        button:hover { opacity: 0.8; }
+        .btn-save { background: #89b4fa; color: #11111b; }
+        .btn-tkb { background: #a6e3a1; color: #11111b; }
+        #status { text-align: center; font-size: 13px; color: #a6e3a1; margin-top: 10px; display: none; }
+    </style>
+</head>
+<body>
+    <h2>UIT Extension</h2>
+    <div class="input-group">
+        <label>Mã số sinh viên</label>
+        <input type="text" id="username" placeholder="Nhập MSSV...">
+    </div>
+    <div class="input-group">
+        <label>Mật khẩu</label>
+        <input type="password" id="password" placeholder="Nhập mật khẩu...">
+    </div>
+    <div class="button-group">
+        <button id="btn-save" class="btn-save">Lưu tài khoản</button>
+        <button id="btn-tkb" class="btn-tkb">Xem Thời Khóa Biểu</button>
+    </div>
+    <div id="status">Đã lưu thành công!</div>
+    <script src="popup.js"></script>
+</body>
+</html>
