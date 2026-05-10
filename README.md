@@ -19,7 +19,7 @@ Tiện ích mở rộng "All-in-one" dành cho sinh viên UIT (Đại học Côn
 ## 🔄 Hướng dẫn cập nhật
 **Cách 1:**
 1. Truy cập vào `chrome://extensions/` và bấm nút Remove (Xóa) tiện ích cũ.
-2. Thực hiện lại các bước như phần Hướng dẫn cài đặt ở [README](https://github.com/NakunaruZeno/UIT-One-For-All#hướng-dẫn-cài-đặt)
+2. Thực hiện lại các bước như phần Hướng dẫn cài đặt ở bên trên
 
 **Cách 2:**
 1. Tải về file .zip mới nhất.
