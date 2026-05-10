@@ -6,7 +6,7 @@ Tiện ích mở rộng "All-in-one" dành cho sinh viên UIT (Đại học Côn
 - **Cảnh báo Điểm mới:** Tự động check điểm ngầm 60 phút/lần. Có điểm mới là thông báo ngay (nhảy Notification góc màn hình).
 - **Cào TKB Thông Minh (ICS + Hybrid):** Đồng bộ lịch học thường, và tự động quét thông báo để bổ sung lịch **HỌC BÙ**, gạch bỏ lịch **NGHỈ HỌC**.
 - **Dashboard TKB Xịn Xò:** Giao diện TKB tuyệt đẹp chia lưới theo tuần trực tiếp trên Extension.
-- **Bảng Điểm:** Bảng điểm có sẳn trên dashboard
+- **Bảng Điểm:** Bảng điểm có trên dashboard
 - **Lịch thi:** Coming soon
 ##  Hướng dẫn cài đặt
 1. Truy cập trang [Releases](../../releases) và tải về file `.zip` mới nhất.
