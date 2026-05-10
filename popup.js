@@ -22,6 +22,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     tkbBtn.addEventListener('click', () => {
-        chrome.tabs.create({ url: chrome.runtime.getURL("dashboard.html") });
+        // Mở cửa sổ popup xịn xò giấu thanh địa chỉ
+        chrome.windows.create({
+            url: chrome.runtime.getURL("dashboard.html"),
+            type: "popup",
+            width: 1250,
+            height: 850,
+            focused: true
+        });
     });
 });

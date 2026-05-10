@@ -7,6 +7,23 @@ function getMonday(d) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    // --- 1. XỬ LÝ CHUYỂN TAB ---
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            
+            e.currentTarget.classList.add('active');
+            const targetId = e.currentTarget.getAttribute('data-tab');
+            document.getElementById(targetId).classList.add('active');
+        });
+    });
+
+    // --- 2. VẼ KHUNG LƯỚI TKB BẰNG JS (Tránh lỗi CSP của Chrome) ---
+    initGridBackground();
+
+    // --- 3. SỰ KIỆN NÚT BẤM ---
     document.getElementById('btn-prev').addEventListener('click', () => changeWeek(-7));
     document.getElementById('btn-next').addEventListener('click', () => changeWeek(7));
     
@@ -15,9 +32,29 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('alert-container').style.display = 'none';
     });
 
-    renderTKB();
+    // --- 4. RENDER DATA ---
     renderAlerts();
+    renderTKB();
+    renderGrades();
+    renderExams();
 });
+
+// Hàm tạo cột giờ và ô nền cho TKB
+function initGridBackground() {
+    const dynamicClasses = document.getElementById('dynamic-classes');
+    const times = ["(7:30 - 8:15)", "(8:15 - 9:00)", "(9:00 - 9:45)", "(10:00 - 10:45)", "(10:45 - 11:30)", "(13:00 - 13:45)", "(13:45 - 14:30)", "(14:30 - 15:15)", "(15:30 - 16:15)", "(16:15 - 17:00)", "(17:45 - 20:45)"];
+    const tietNames = ["Tiết 1", "Tiết 2", "Tiết 3", "Tiết 4", "Tiết 5", "Tiết 6", "Tiết 7", "Tiết 8", "Tiết 9", "Tiết 10", "Buổi tối"];
+    
+    let gridHTML = '';
+    for(let i=0; i<11; i++) {
+        gridHTML += `<div class="time-col" style="grid-column: 1; grid-row: ${i+2}">${tietNames[i]}<br>${times[i]}</div>`;
+        for(let j=2; j<=7; j++) {
+            gridHTML += `<div class="tkb-cell" style="grid-column: ${j}; grid-row: ${i+2}"></div>`;
+        }
+    }
+    // Chèn HTML lưới nền vào ngay trước dynamic-classes
+    dynamicClasses.insertAdjacentHTML('beforebegin', gridHTML);
+}
 
 function changeWeek(days) {
     currentViewDate.setDate(currentViewDate.getDate() + days);
@@ -31,7 +68,7 @@ function renderAlerts() {
             const ul = document.getElementById('alert-list');
             ul.innerHTML = '';
             res.tkb_alerts.forEach(alert => {
-                ul.innerHTML += `<li><a href="${alert.link}" target="_blank">${alert.title}</a> (${alert.courseName})</li>`;
+                ul.innerHTML += `<li style="margin-bottom: 8px;">Môn <b>${alert.courseName}</b>: ${alert.title} <a href="${alert.link}" target="_blank">🔗 Xem chi tiết</a></li>`;
             });
         }
     });
@@ -66,12 +103,7 @@ function renderTKB() {
                     const eventDateStr = `${eventDate.getFullYear()}-${(eventDate.getMonth()+1).toString().padStart(2,'0')}-${eventDate.getDate().toString().padStart(2,'0')}`;
 
                     const baseEvTitle = ev.title.split('(')[0].trim();
-                    const isCancelledToday = events.some(c => 
-                        c.isCancelled && 
-                        c.startDate === eventDateStr && 
-                        c.title.includes(baseEvTitle)
-                    );
-                    
+                    const isCancelledToday = events.some(c => c.isCancelled && c.startDate === eventDateStr && c.title.includes(baseEvTitle));
                     if (isCancelledToday) return; 
                 }
 
@@ -87,6 +119,7 @@ function renderTKB() {
                 const gridCol = ev.dayOfWeek; 
                 let startRow = ev.startTiet + 1;
                 if (ev.startTiet === 0) startRow = 11; 
+                if (ev.startTiet === 11) startRow = 12; 
                 
                 container.innerHTML += `
                     <div class="${cardClass}" style="grid-column: ${gridCol}; grid-row: ${startRow} / span ${ev.spanTiet}; z-index: 10;">
@@ -96,6 +129,57 @@ function renderTKB() {
                     </div>
                 `;
             }
+        });
+    });
+}
+
+function renderGrades() {
+    chrome.storage.local.get(['saved_grades'], (res) => {
+        const grades = res.saved_grades || [];
+        const tbody = document.querySelector('#grades-table tbody');
+        if (grades.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="9">Đang chờ quét dữ liệu điểm... Hãy mở trang KQHT trên web trường.</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = '';
+        let currentKy = "";
+
+        grades.forEach(g => {
+            if (g.hocKy !== currentKy && g.hocKy !== "Chưa xác định") {
+                currentKy = g.hocKy;
+                tbody.innerHTML += `
+                    <tr style="background-color: #45475a;">
+                        <td colspan="9" style="text-align: left; font-weight: bold; color: #f5c2e7; padding-left: 15px;">
+                            📌 ${currentKy}
+                        </td>
+                    </tr>
+                `;
+            }
+
+            tbody.innerHTML += `<tr>
+                <td>${g.maHP}</td><td style="text-align:left; font-weight:bold;">${g.tenHP}</td><td>${g.tc}</td>
+                <td>${g.diemQT}</td><td>${g.diemGK}</td><td>${g.diemTH}</td>
+                <td>${g.diemCK}</td><td style="color:#a6e3a1; font-weight:bold;">${g.diemHP}</td><td>${g.ghiChu}</td>
+            </tr>`;
+        });
+    });
+}
+
+function renderExams() {
+    chrome.storage.local.get(['saved_exams'], (res) => {
+        const exams = res.saved_exams || [];
+        const tbody = document.querySelector('#exams-table tbody');
+        if (exams.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="8">Hiện tại chưa có lịch thi nào hoặc đang chờ đồng bộ...</td></tr>`;
+            return;
+        }
+        exams.forEach(e => {
+            tbody.innerHTML += `<tr>
+                <td>${e.stt}</td><td style="color:#f5c2e7; font-weight:bold;">${e.maMH}</td><td>${e.maLop}</td>
+                <td>${e.caThi}</td><td>${e.thuThi}</td><td style="color:#a6e3a1;">${e.ngayThi}</td>
+                <td style="color:#f38ba8; font-weight:bold;">${e.phongThi}</td><td>${e.ghiChu}</td>
+            </tr>`;
         });
     });
 }

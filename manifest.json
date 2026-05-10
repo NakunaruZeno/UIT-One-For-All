@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "UIT One for All",
-  "version": "1.0",
-  "description": "Auto Login, Check Điểm, Cào TKB ICS và Cảnh báo Lịch học UIT",
+  "name": "UIT One For All",
+  "version": "1.1",
+  "description": "Auto Login, Cào Điểm, Lịch Thi, TKB ICS và Cảnh báo Lịch học",
   "author": "NaruZeno",
   "action": {
     "default_popup": "popup.html",
@@ -12,7 +12,8 @@
     "storage",
     "alarms",
     "notifications",
-    "tabs"
+    "tabs",
+    "windows"
   ],
   "host_permissions": [
     "*://student.uit.edu.vn/*",
