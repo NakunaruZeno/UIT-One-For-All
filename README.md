@@ -16,4 +16,15 @@ Tiện ích mở rộng "All-in-one" dành cho sinh viên UIT (Đại học Côn
 6. Bấm vào icon tiện ích ở góc màn hình(Sau khi đã pin extension), điền MSSV và Mật khẩu rồi bấm **Lưu tài khoản**.
 7. Thoát khỏi trình duyệt vào lại
 
+## 🔄 Hướng dẫn cập nhật
+**Cách 1:**
+1. Truy cập vào `chrome://extensions/` và bấm nút Remove (Xóa) tiện ích cũ.
+2. Thực hiện lại các bước như phần Hướng dẫn cài đặt ở [README](https://github.com/NakunaruZeno/UIT-One-For-All#hướng-dẫn-cài-đặt)
+
+**Cách 2:**
+1. Tải về file .zip mới nhất.
+2. Giải nén file vừa tải, sau đó Copy toàn bộ các file bên trong
+3. Tìm đến thư mục Extension bạn đã cài trên máy tính và Paste đè lên các file cũ.
+4. Mở trình duyệt, vào `chrome://extensions` và bấm vào biểu tượng Update hoặc nút xoay tròn tại Extension UIT One For All.
+
 # **Chúc bạn có trải nghiệm học tập tiện lợi hơn!**
