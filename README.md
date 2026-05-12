@@ -8,6 +8,7 @@ Tiện ích mở rộng "All-in-one" dành cho sinh viên UIT (Đại học Côn
 - **Dashboard TKB Xịn Xò:** Giao diện TKB tuyệt đẹp chia lưới theo tuần trực tiếp trên Extension.
 - **Bảng Điểm:** Bảng điểm có trên dashboard
 - **Lịch thi:** Coming soon
+- **Auto Survey:** Coming soon
 ##  Hướng dẫn cài đặt
 1. Truy cập trang [Releases](../../releases) và tải về file `.zip` mới nhất.
 2. Giải nén file `.zip` vừa tải ra một thư mục riêng trên máy tính (VD: Desktop/UIT-Extension).
