@@ -3,7 +3,7 @@ Tiện ích mở rộng "All-in-one" dành cho sinh viên UIT (Đại học Côn
 
 ##  Tính năng nổi bật
 - **Auto Login:** Tự động điền MSSV, Mật khẩu và giải luôn mã Captcha khi vào [`student.uit.edu.vn`](https://student.uit.edu.vn), [`daa.uit.edu.vn`](https://daa.uit.edu.vn), và [`courses.uit.edu.vn`](https://courses.uit.edu.vn).
-- **Cảnh báo Điểm mới:** Tự động check điểm ngầm 60 phút/lần. Có điểm mới là thông báo ngay (nhảy Notification góc màn hình).
+- **Cảnh báo Điểm mới:** Tự động check điểm ngầm 3h/lần. Có điểm mới là thông báo ngay (nhảy Notification góc màn hình).
 - **Cào TKB Thông Minh (ICS + Hybrid):** Đồng bộ lịch học thường, và tự động quét thông báo để bổ sung lịch **HỌC BÙ**, gạch bỏ lịch **NGHỈ HỌC**.
 - **Dashboard TKB Xịn Xò:** Giao diện TKB tuyệt đẹp chia lưới theo tuần trực tiếp trên Extension.
 - **Bảng Điểm:** Bảng điểm có trên dashboard
