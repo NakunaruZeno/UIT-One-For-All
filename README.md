@@ -8,7 +8,7 @@ Tiện ích mở rộng "All-in-one" dành cho sinh viên UIT (Đại học Côn
 - **Dashboard TKB Xịn Xò:** Giao diện TKB tuyệt đẹp chia lưới theo tuần trực tiếp trên Extension.
 - **Bảng Điểm:** Bảng điểm có trên dashboard
 - **Semi-Auto Survey:** Tự động điền khảo sát môn học 
-- **Lịch thi:** Coming soon
+- **Lịch thi:** Có thể xem lịch thi trên dashboard của extensions
 
 ##  Hướng dẫn cài đặt
 1. Truy cập trang [Releases](../../releases) và tải về file `.zip` mới nhất.
