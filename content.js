@@ -70,88 +70,133 @@
         setTimeout(() => btn.click(), 600);
     }
 
-    // --- 1. CÀO ĐIỂM   (ĐÃ FIX LỖI SPAM THÔNG BÁO) ---
+// --- 1. CÀO ĐIỂM (BẢN VÁ LỖI SPAM THÔNG BÁO DO MÔN HỌC LẠI) ---
     async function checkGrades() {
         if (!url.includes('/sinhvien/kqhoctap')) return;
         const rows = document.querySelectorAll('table[bordercolor="#000000"] tr');
         let currentGrades = [];
         let currentSemester = "Chưa xác định";
         
+        // Hàm dọn dẹp khoảng trắng rác ẩn (triệt tiêu &nbsp;)
+        const cleanText = (text) => text ? text.replace(/&nbsp;/g, '').replace(/[\u00A0\s]+/g, ' ').trim() : "";
+        
         rows.forEach(row => {
             const cells = row.querySelectorAll('td');
             if (cells.length === 1 && cells[0].hasAttribute('colspan')) {
-                currentSemester = cells[0].innerText.replace(/[\u00A0\s]+/g, ' ').trim();
+                currentSemester = cleanText(cells[0].innerText);
             }
             if (cells.length >= 10 && cells[1].innerText.trim() !== "" && !cells[2].innerText.includes("Trung bình")) {
                 currentGrades.push({
                     hocKy: currentSemester,
-                    maHP: cells[1].innerText.trim(),
-                    tenHP: cells[2].innerText.trim(),
-                    tc: cells[3].innerText.trim(),
-                    diemQT: cells[4].innerText.trim(),
-                    diemGK: cells[5].innerText.trim(),
-                    diemTH: cells[6].innerText.trim(),
-                    diemCK: cells[7].innerText.trim(),
-                    diemHP: cells[8].innerText.trim(),
-                    ghiChu: cells[9].innerText.trim()
+                    maHP: cleanText(cells[1].innerText),
+                    tenHP: cleanText(cells[2].innerText),
+                    tc: cleanText(cells[3].innerText),
+                    diemQT: cleanText(cells[4].innerText),
+                    diemGK: cleanText(cells[5].innerText),
+                    diemTH: cleanText(cells[6].innerText),
+                    diemCK: cleanText(cells[7].innerText),
+                    diemHP: cleanText(cells[8].innerText),
+                    ghiChu: cleanText(cells[9].innerText)
                 });
             }
         });
 
         chrome.storage.local.get(['saved_grades'], (res) => {
             const oldGrades = res.saved_grades || [];
-            let hasChanges = false;
+            let hasRealChanges = false;
             
-            // CHỈ BÁO KHI ĐÃ TỪNG CÓ DỮ LIỆU ĐIỂM Ở LẦN TRƯỚC VÀ CÓ SỰ THAY ĐỔI
             if (oldGrades.length > 0 && currentGrades.length > 0) {
                 const oldMap = {};
-                oldGrades.forEach(g => { oldMap[g.maHP] = g; });
+                // TẠO KEY DUY NHẤT: Bằng Học kỳ + Mã môn (Fix triệt để lỗi môn học lại/cải thiện)
+                oldGrades.forEach(g => { 
+                    const uniqueKey = g.hocKy + "_" + g.maHP;
+                    oldMap[uniqueKey] = g; 
+                });
                 
                 for (const curr of currentGrades) {
-                    const old = oldMap[curr.maHP];
-                    // Nếu là môn học mới
-                    if (!old) {
-                        hasChanges = true;
+                    const uniqueKey = curr.hocKy + "_" + curr.maHP;
+                    const old = oldMap[uniqueKey];
+                    
+                    // So sánh: Nếu là môn mới tinh HOẶC có bất kỳ cột điểm nào sai lệch
+                    if (!old || 
+                        old.diemQT !== curr.diemQT || 
+                        old.diemGK !== curr.diemGK || 
+                        old.diemTH !== curr.diemTH || 
+                        old.diemCK !== curr.diemCK || 
+                        old.diemHP !== curr.diemHP) {
+                        hasRealChanges = true;
                         break;
                     }
                 }
             }
 
-            if (hasChanges) {
-                chrome.runtime.sendMessage({ action: "notifyUpdates", title: "Cập nhật bảng điểm UIT!", content: "Vừa có điểm mới được cập nhật trên DAA." });
-            }
-            if (currentGrades.length > 0) chrome.storage.local.set({ saved_grades: currentGrades });
-            cleanUpTab();
-        });
-    }
-
-    // --- 2. CÀO LỊCH THI ---
-    async function checkExams() {
-        if (!url.includes('/sinhvien/lichhoc/lichthi')) return;
-        const rows = document.querySelectorAll('table tr');
-        let currentExams = [];
-        rows.forEach(row => {
-            const cells = row.querySelectorAll('td');
-            if (cells.length >= 8 && cells[1].innerText.trim() !== "" && !cells[0].innerText.includes("Hiện tại bạn")) {
-                currentExams.push({
-                    stt: cells[0].innerText.trim(), maMH: cells[1].innerText.trim(), maLop: cells[2].innerText.trim(),
-                    caThi: cells[3].innerText.trim(), thuThi: cells[4].innerText.trim(), ngayThi: cells[5].innerText.trim(),
-                    phongThi: cells[6].innerText.trim(), ghiChu: cells[7].innerText.trim()
+            // Gửi thông báo nếu có sự khác biệt thật sự
+            if (hasRealChanges) {
+                chrome.runtime.sendMessage({ 
+                    action: "notifyUpdates", 
+                    title: "Cập nhật bảng điểm UIT!", 
+                    content: "Vừa có điểm mới được cập nhật trên DAA." 
                 });
             }
-        });
 
-        chrome.storage.local.get(['saved_exams'], (res) => {
-            const oldExams = res.saved_exams || [];
-            if (oldExams.length > 0 && currentExams.length > 0 && JSON.stringify(currentExams) !== JSON.stringify(oldExams)) {
-                chrome.runtime.sendMessage({ action: "notifyUpdates", title: "Có Lịch thi mới!", content: "Phòng đào tạo vừa cập nhật Lịch thi." });
+            // Ghi đè vào bộ nhớ TRƯỚC KHI đóng tab
+            if (currentGrades.length > 0) {
+                chrome.storage.local.set({ saved_grades: currentGrades }, () => {
+                    cleanUpTab();
+                });
+            } else {
+                cleanUpTab();
             }
-            if (currentExams.length > 0) chrome.storage.local.set({ saved_exams: currentExams });
-            cleanUpTab();
         });
     }
 
-// --- 3. CÀO TKB (ICS + HTML + BÙ 30 TRANG) ---
+    // --- 2. CÀO LỊCH THI BẰNG API NGẦM ---
+    async function checkExamsAuto() {
+        if (!url.includes('/sinhvien/kqhoctap')) return; 
+        
+        const res = await chrome.storage.local.get(['saved_exams', 'exam_params']);
+        const params = res.exam_params || { lanthi: 2, hocky: 2, namhoc: 2025 };
+        const fetchUrl = `https://student.uit.edu.vn/sinhvien/lichhoc/lichthi?lanthi=${params.lanthi}&hocky=${params.hocky}&namhoc=${params.namhoc}`;
+
+        try {
+            const response = await fetch(fetchUrl);
+            const html = await response.text();
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const rows = doc.querySelectorAll('table tr');
+            let currentExams = [];
+            
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                if (cells.length >= 8 && cells[1].innerText.trim() !== "" && !cells[0].innerText.includes("Hiện tại bạn")) {
+                    currentExams.push({
+                        stt: cells[0].innerText.trim(), maMH: cells[1].innerText.trim(), maLop: cells[2].innerText.trim(),
+                        caThi: cells[3].innerText.trim(), thuThi: cells[4].innerText.trim(), ngayThi: cells[5].innerText.trim(),
+                        phongThi: cells[6].innerText.trim(), ghiChu: cells[7].innerText.trim()
+                    });
+                }
+            });
+
+            const oldExams = res.saved_exams || [];
+            let hasNew = false;
+            
+            if (oldExams.length > 0 && currentExams.length > 0) {
+                const oldExamsSet = new Set(oldExams.map(e => e.maLop + "_" + e.ngayThi));
+                for (const ex of currentExams) {
+                    if (!oldExamsSet.has(ex.maLop + "_" + ex.ngayThi)) {
+                        hasNew = true; break;
+                    }
+                }
+            }
+
+            if (hasNew) {
+                chrome.runtime.sendMessage({ action: "notifyUpdates", title: "Có Lịch thi mới!", content: "Phòng đào tạo vừa cập nhật Lịch thi của bạn." });
+            }
+            if (currentExams.length > 0) chrome.storage.local.set({ saved_exams: currentExams });
+        } catch(e) { console.error("Lỗi fetch lịch thi tự động", e); }
+    }
+
+    // --- 3. CÀO TKB (ICS + HTML + BÙ 30 TRANG - SỬA LỖI FULL MÃ LỚP CỰC CHUẨN) ---
     async function scrapeTKB_ICS() {
         if (!url.includes('/sinhvien/tkb')) return;
         const icsLinkElem = document.querySelector('a[href^="/ics/tkb/"]');
@@ -227,11 +272,10 @@
                 }
             });
 
-            // TỐI ƯU QUÉT SÂU 30 TRANG NẾU LÀ LẦN ĐẦU TIÊN
             const storageRes = await chrome.storage.local.get(['saved_custom_events', 'tkb_alerts', 'has_scraped_30_pages']);
             let customEvents = storageRes.saved_custom_events || [];
             let activeAlerts = storageRes.tkb_alerts || [];
-            const maxPage = storageRes.has_scraped_30_pages ? 10 : 30; // 30 trang lần đầu, 10 trang lần sau
+            const maxPage = storageRes.has_scraped_30_pages ? 10 : 30; 
             let hasNewAlerts = false;
 
             const fetchPromises = [];
@@ -272,9 +316,28 @@
                         const isMakeup = articleTitle.toLowerCase().includes("bù");
                         const isCancelled = articleTitle.toLowerCase().includes("nghỉ");
 
+                        // --- FIX: THUẬT TOÁN SO SÁNH MÃ LỚP THÔNG MINH ---
                         const matchedCourse = baseEvents.find(c => {
-                            const baseCode = c.title.split('(')[0].trim(); 
-                            return classCode.includes(baseCode) || baseCode.includes(classCode);
+                            const baseCode = c.title.split(' - ')[0].trim(); 
+                            
+                            // 1. Nếu trùng khớp hoàn toàn (VD: IT007.Q29 == IT007.Q29)
+                            if (baseCode === classCode) return true;
+
+                            // 2. Nếu mã TKB có thêm đuôi .1, .2 (thực hành) nhưng thông báo gộp chung
+                            // VD: TKB = IE108.Q21.CNVN.1 | Thông báo = IE108.Q21.CNVN -> Match
+                            // VD: TKB = IE108.Q21.CNVN | Thông báo = IE108.Q21 -> KHÔNG Match (Đã chặn được lỗi)
+                            if (baseCode.startsWith(classCode + '.')) {
+                                const suffix = baseCode.substring(classCode.length + 1);
+                                if (/^\d+$/.test(suffix)) return true; // Đuôi phải là số (.1, .2) mới tính là thực hành
+                            }
+                            
+                            // 3. Nếu thông báo có thêm đuôi .1, .2 nhưng TKB gộp chung (Hiếm)
+                            if (classCode.startsWith(baseCode + '.')) {
+                                const suffix = classCode.substring(baseCode.length + 1);
+                                if (/^\d+$/.test(suffix)) return true;
+                            }
+
+                            return false;
                         });
                         
                         if (matchedCourse) {
@@ -302,7 +365,6 @@
                                 }
                                 hasNewAlerts = true;
 
-                                // Chỉ báo notification nếu không phải lần cào đầu tiên (để tránh spam 30 trang quá khứ)
                                 if (storageRes.has_scraped_30_pages) {
                                     chrome.runtime.sendMessage({
                                         action: "notifyUpdates", 
@@ -320,7 +382,7 @@
                 saved_custom_events: customEvents,
                 tkb_alerts: activeAlerts,
                 saved_tkb_ics: [...baseEvents, ...customEvents],
-                has_scraped_30_pages: true // Đánh dấu đã cào sâu 30 trang
+                has_scraped_30_pages: true 
             });
 
         } catch (e) { console.error("Lỗi cào file TKB", e); } 
@@ -336,7 +398,7 @@
 
     if (isAutoCheck) setTimeout(() => { chrome.runtime.sendMessage({ action: "closeAutoTab" }); }, 15000);
 
-    // --- 4. AUTO SURVEY UIT ---
+    // --- 4. AUTO SURVEY ---
     async function runAutoSurvey() {
         setTimeout(function() {
             let nextBtn = document.getElementById('movenextbtn');
@@ -364,7 +426,7 @@
             }
             else if (groupName === 'ĐÁNH GIÁ VỀ HOẠT ĐỘNG GIẢNG DẠY') {
                 document.querySelectorAll('tr.answers-list').forEach(row => {
-                    let options = row.querySelectorAll('input[type="radio"][title="3"], input[type="radio"][title="4"]');
+                    let options = row.querySelectorAll('input[type=\"radio\"][title=\"3\"], input[type=\"radio\"][title=\"4\"]');
                     if (options.length > 0) {
                         let opt = options[Math.floor(Math.random() * options.length)];
                         if (!opt.checked) opt.click();
@@ -386,7 +448,7 @@
             runUITLogin(); 
         } else {
             checkGrades();
-            checkExams();
+            checkExamsAuto(); 
             scrapeTKB_ICS();
         }
     } else if (host.includes("courses.uit.edu.vn")) {

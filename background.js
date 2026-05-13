@@ -32,7 +32,6 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 function triggerCheck() {
     chrome.tabs.create({ url: "https://student.uit.edu.vn/sinhvien/kqhoctap?source=auto_check", active: false });
     setTimeout(() => { chrome.tabs.create({ url: "https://daa.uit.edu.vn/sinhvien/tkb?source=auto_check", active: false }); }, 2000);
-    setTimeout(() => { chrome.tabs.create({ url: "https://daa.uit.edu.vn/sinhvien/lichhoc/lichthi?source=auto_check", active: false }); }, 4000);
 }
 
 // Cào thông báo đổi phòng

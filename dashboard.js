@@ -7,23 +7,19 @@ function getMonday(d) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    // --- 1. XỬ LÝ CHUYỂN TAB ---
     const tabBtns = document.querySelectorAll('.tab-btn');
     tabBtns.forEach(btn => {
         btn.addEventListener('click', (e) => {
             document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            
             e.currentTarget.classList.add('active');
             const targetId = e.currentTarget.getAttribute('data-tab');
             document.getElementById(targetId).classList.add('active');
         });
     });
 
-    // --- 2. VẼ KHUNG LƯỚI TKB BẰNG JS (Tránh lỗi CSP của Chrome) ---
     initGridBackground();
 
-    // --- 3. SỰ KIỆN NÚT BẤM ---
     document.getElementById('btn-prev').addEventListener('click', () => changeWeek(-7));
     document.getElementById('btn-next').addEventListener('click', () => changeWeek(7));
     
@@ -32,14 +28,63 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('alert-container').style.display = 'none';
     });
 
-    // --- 4. RENDER DATA ---
+    // --- SỰ KIỆN TẢI LỊCH THI MỚI ---
+    document.getElementById('btn-fetch-exams').addEventListener('click', async () => {
+        const btn = document.getElementById('btn-fetch-exams');
+        const lanthi = document.getElementById('exam-type').value;
+        const hocky = document.getElementById('exam-term').value;
+        const namhoc = document.getElementById('exam-year').value;
+        
+        chrome.storage.local.set({ exam_params: {lanthi, hocky, namhoc} });
+        btn.innerText = "Đang tải...";
+        
+        try {
+            const url = `https://student.uit.edu.vn/sinhvien/lichhoc/lichthi?lanthi=${lanthi}&hocky=${hocky}&namhoc=${namhoc}`;
+            const res = await fetch(url);
+            const html = await res.text();
+            
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const rows = doc.querySelectorAll('table tr');
+            let currentExams = [];
+            
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                if (cells.length >= 8 && cells[1].innerText.trim() !== "" && !cells[0].innerText.includes("Hiện tại bạn")) {
+                    currentExams.push({
+                        stt: cells[0].innerText.trim(), maMH: cells[1].innerText.trim(), maLop: cells[2].innerText.trim(),
+                        caThi: cells[3].innerText.trim(), thuThi: cells[4].innerText.trim(), ngayThi: cells[5].innerText.trim(),
+                        phongThi: cells[6].innerText.trim(), ghiChu: cells[7].innerText.trim()
+                    });
+                }
+            });
+
+            chrome.storage.local.set({ saved_exams: currentExams });
+            renderExams();
+            
+            btn.innerText = "Đã cập nhật!";
+            setTimeout(() => { btn.innerText = "Cập nhật Lịch Thi"; }, 2000);
+        } catch(e) {
+            btn.innerText = "Lỗi kết nối!";
+            setTimeout(() => { btn.innerText = "Cập nhật Lịch Thi"; }, 2000);
+        }
+    });
+
+    // Khôi phục tùy chọn Lịch Thi cũ
+    chrome.storage.local.get(['exam_params'], (res) => {
+        if(res.exam_params) {
+            document.getElementById('exam-type').value = res.exam_params.lanthi;
+            document.getElementById('exam-term').value = res.exam_params.hocky;
+            document.getElementById('exam-year').value = res.exam_params.namhoc;
+        }
+    });
+
     renderAlerts();
     renderTKB();
     renderGrades();
     renderExams();
 });
 
-// Hàm tạo cột giờ và ô nền cho TKB
 function initGridBackground() {
     const dynamicClasses = document.getElementById('dynamic-classes');
     const times = ["(7:30 - 8:15)", "(8:15 - 9:00)", "(9:00 - 9:45)", "(10:00 - 10:45)", "(10:45 - 11:30)", "(13:00 - 13:45)", "(13:45 - 14:30)", "(14:30 - 15:15)", "(15:30 - 16:15)", "(16:15 - 17:00)", "(17:45 - 20:45)"];
@@ -52,7 +97,6 @@ function initGridBackground() {
             gridHTML += `<div class="tkb-cell" style="grid-column: ${j}; grid-row: ${i+2}"></div>`;
         }
     }
-    // Chèn HTML lưới nền vào ngay trước dynamic-classes
     dynamicClasses.insertAdjacentHTML('beforebegin', gridHTML);
 }
 
@@ -87,7 +131,6 @@ function renderTKB() {
         const container = document.getElementById('dynamic-classes');
         container.innerHTML = ''; 
 
-        // BƯỚC 1: Thu thập tất cả các sự kiện hợp lệ trong tuần hiện tại
         let weekEvents = [];
 
         events.forEach(ev => {
@@ -123,7 +166,6 @@ function renderTKB() {
             }
         });
 
-        // BƯỚC 2: Thuật toán gom nhóm các môn Trùng Lịch
         let columns = {2:[], 3:[], 4:[], 5:[], 6:[], 7:[], 8:[]};
         weekEvents.forEach(e => columns[e.col].push(e));
 
@@ -158,25 +200,20 @@ function renderTKB() {
                 let groupStart = evs[i].start;
                 
                 let j = i + 1;
-                // Kiểm tra xem môn tiếp theo có chèn lên giờ môn hiện tại không
                 while (j < evs.length && evs[j].start <= groupEnd) {
                     group.push(evs[j]);
                     groupEnd = Math.max(groupEnd, evs[j].end);
                     j++;
                 }
                 
-                // Nếu không bị trùng
                 if (group.length === 1) {
                     let g = group[0];
-                    let html = `<div style="grid-column: ${col}; grid-row: ${g.start} / span ${g.span}; z-index: 10;">
+                    container.innerHTML += `<div style="grid-column: ${col}; grid-row: ${g.start} / span ${g.span}; z-index: 10;">
                                     ${getCardHTML(g.ev)}
                                 </div>`;
-                    container.innerHTML += html;
-                } 
-                // Nếu BỊ TRÙNG -> Hiện thẻ cảnh báo Menu Dropdown
-                else {
+                } else {
                     let listHTML = group.map(g => getCardHTML(g.ev, true)).join('');
-                    let html = `
+                    container.innerHTML += `
                         <div class="overlap-container" style="grid-column: ${col}; grid-row: ${groupStart} / span ${groupEnd - groupStart + 1}; z-index: 20;">
                             <div class="overlap-trigger">⚠️ Trùng ${group.length} lịch<br>(Rê chuột vào)</div>
                             <div class="overlap-list">
@@ -184,7 +221,6 @@ function renderTKB() {
                             </div>
                         </div>
                     `;
-                    container.innerHTML += html;
                 }
                 i = j;
             }
@@ -233,6 +269,7 @@ function renderExams() {
             tbody.innerHTML = `<tr><td colspan="8">Hiện tại chưa có lịch thi nào hoặc đang chờ đồng bộ...</td></tr>`;
             return;
         }
+        tbody.innerHTML = '';
         exams.forEach(e => {
             tbody.innerHTML += `<tr>
                 <td>${e.stt}</td><td style="color:#f5c2e7; font-weight:bold;">${e.maMH}</td><td>${e.maLop}</td>

@@ -15,7 +15,8 @@
         .tab-content.active { display: block; }
 
         .header-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        button.action-btn { background: #89b4fa; color: #11111b; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        button.action-btn { background: #89b4fa; color: #11111b; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s;}
+        button.action-btn:hover { opacity: 0.8; }
         
         .alert-box { background: #f38ba8; color: #11111b; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: none; }
         .alert-box a { color: #11111b; font-weight: bold; background: rgba(255,255,255,0.3); padding: 2px 6px; border-radius: 4px; text-decoration: none; margin-left: 10px;}
@@ -46,17 +47,13 @@
         .data-table th, .data-table td { padding: 12px; border: 1px solid #313244; text-align: center; }
         .data-table th { background: #313244; color: #cba6f7; font-weight: bold; }
         .data-table tr:nth-child(even) { background: #1e1e2e; }
+
         /* DROPDOWN TRÙNG LỊCH */
-        .overlap-container {
-            position: relative;
-            width: 100%; height: 100%;
-        }
+        .overlap-container { position: relative; width: 100%; height: 100%; }
         .overlap-trigger {
             background: #fab387; color: #111; font-weight: bold; border-radius: 4px;
             display: flex; align-items: center; justify-content: center; height: 100%; cursor: pointer;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            border-left: 4px solid #d20f39;
-            font-size: 0.9em;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2); border-left: 4px solid #d20f39; font-size: 0.9em;
         }
         .overlap-list {
             display: none; position: absolute; top: 100%; left: 0; width: 250px; z-index: 999;
@@ -66,6 +63,11 @@
         .overlap-container:hover { z-index: 100 !important; }
         .overlap-container:hover .overlap-list { display: flex; }
         .overlap-item { position: static !important; height: auto !important; margin-bottom: 5px; }
+        
+        /* FORM CHỌN LỊCH THI */
+        .exam-filter { display: flex; gap: 15px; background: #313244; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
+        .exam-filter label { font-weight: bold; margin-right: 5px; color: #bac2de;}
+        .exam-filter select { padding: 6px; border-radius: 4px; border: none; outline: none; background: #181825; color: #cdd6f4; font-weight: bold;}
     </style>
 </head>
 <body>
@@ -94,7 +96,6 @@
                 <div class="header-cell">Thứ 2</div><div class="header-cell">Thứ 3</div>
                 <div class="header-cell">Thứ 4</div><div class="header-cell">Thứ 5</div>
                 <div class="header-cell">Thứ 6</div><div class="header-cell">Thứ 7</div>
-                
                 <div id="dynamic-classes" style="display: contents;"></div>
             </div>
         </div>
@@ -114,7 +115,36 @@
         </div>
 
         <div id="tab-thi" class="tab-content">
-            <h2 style="color: #89b4fa;">Lịch thi sinh viên</h2>
+            <div class="exam-filter">
+                <div>
+                    <label>Kỳ thi:</label>
+                    <select id="exam-type">
+                        <option value="1">Giữa kỳ (GK)</option>
+                        <option value="2" selected>Cuối kỳ (CK)</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Học kỳ:</label>
+                    <select id="exam-term">
+                        <option value="1">1</option>
+                        <option value="2" selected>2</option>
+                        <option value="3">Hè</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Năm học:</label>
+                    <select id="exam-year">
+                        <option value="2024">2024-2025</option>
+                        <option value="2025" selected>2025-2026</option>
+                        <option value="2026">2026-2027</option>
+                        <option value="2027">2027-2028</option>
+                    </select>
+                </div>
+                <div style="margin-left: auto;">
+                    <button id="btn-fetch-exams" class="action-btn">Cập nhật Lịch Thi</button>
+                </div>
+            </div>
+
             <table class="data-table" id="exams-table">
                 <thead>
                     <tr>
