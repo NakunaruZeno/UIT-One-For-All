@@ -7,8 +7,9 @@ Tiện ích mở rộng "All-in-one" dành cho sinh viên UIT (Đại học Côn
 - **Cào TKB Thông Minh (ICS + Hybrid):** Đồng bộ lịch học thường, và tự động quét thông báo để bổ sung lịch **HỌC BÙ**, gạch bỏ lịch **NGHỈ HỌC**.
 - **Dashboard TKB Xịn Xò:** Giao diện TKB tuyệt đẹp chia lưới theo tuần trực tiếp trên Extension.
 - **Bảng Điểm:** Bảng điểm có trên dashboard
+- **Semi-Auto Survey:** Tự động điền khảo sát môn học 
 - **Lịch thi:** Coming soon
-- **Auto Survey:** Coming soon
+
 ##  Hướng dẫn cài đặt
 1. Truy cập trang [Releases](../../releases) và tải về file `.zip` mới nhất.
 2. Giải nén file `.zip` vừa tải ra một thư mục riêng trên máy tính (VD: Desktop/UIT-Extension).
