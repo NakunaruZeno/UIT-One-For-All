@@ -87,6 +87,9 @@ function renderTKB() {
         const container = document.getElementById('dynamic-classes');
         container.innerHTML = ''; 
 
+        // BƯỚC 1: Thu thập tất cả các sự kiện hợp lệ trong tuần hiện tại
+        let weekEvents = [];
+
         events.forEach(ev => {
             const evStart = new Date(ev.startDate);
             const evUntil = new Date(ev.untilDate);
@@ -96,7 +99,6 @@ function renderTKB() {
             const diffWeeks = Math.round(diffTime / (1000 * 60 * 60 * 24 * 7));
 
             if (diffWeeks >= 0 && monday <= evUntil && (diffWeeks % ev.interval === 0)) {
-                
                 if (!ev.isMakeup && !ev.isCancelled) {
                     const eventDate = new Date(monday);
                     eventDate.setDate(monday.getDate() + (ev.dayOfWeek === 8 ? 6 : ev.dayOfWeek - 2));
@@ -107,29 +109,86 @@ function renderTKB() {
                     if (isCancelledToday) return; 
                 }
 
-                let cardClass = 'class-card';
-                if (ev.isMakeup) cardClass += ' makeup-card';
-                else if (ev.isCancelled) cardClass += ' cancelled-card';
-                else if (ev.title.includes('.1') || ev.fullDesc.includes('HT1') || ev.fullDesc.includes('TH')) cardClass += ' ht1-card';
-
-                const parts = ev.title.split(' - ');
-                const courseName = parts[0];
-                const room = parts.length > 1 ? parts[1] : (ev.fullDesc.includes('Phòng:') ? ev.fullDesc : "");
-
-                const gridCol = ev.dayOfWeek; 
                 let startRow = ev.startTiet + 1;
                 if (ev.startTiet === 0) startRow = 11; 
                 if (ev.startTiet === 11) startRow = 12; 
-                
-                container.innerHTML += `
-                    <div class="${cardClass}" style="grid-column: ${gridCol}; grid-row: ${startRow} / span ${ev.spanTiet}; z-index: 10;">
-                        <div class="class-title">${courseName}</div>
-                        <div class="class-room">${room}</div>
-                        <div style="margin-top: 4px; font-size: 0.8em;">${ev.teacher}</div>
-                    </div>
-                `;
+
+                weekEvents.push({
+                    ev: ev,
+                    col: ev.dayOfWeek,
+                    start: startRow,
+                    span: ev.spanTiet,
+                    end: startRow + ev.spanTiet - 1
+                });
             }
         });
+
+        // BƯỚC 2: Thuật toán gom nhóm các môn Trùng Lịch
+        let columns = {2:[], 3:[], 4:[], 5:[], 6:[], 7:[], 8:[]};
+        weekEvents.forEach(e => columns[e.col].push(e));
+
+        function getCardHTML(ev, isItem = false) {
+            let cardClass = 'class-card';
+            if (ev.isMakeup) cardClass += ' makeup-card';
+            else if (ev.isCancelled) cardClass += ' cancelled-card';
+            else if (ev.title.includes('.1') || ev.fullDesc.includes('HT1') || ev.fullDesc.includes('TH')) cardClass += ' ht1-card';
+            if (isItem) cardClass += ' overlap-item';
+
+            const parts = ev.title.split(' - ');
+            const courseName = parts[0];
+            const room = parts.length > 1 ? parts[1] : (ev.fullDesc.includes('Phòng:') ? ev.fullDesc : "");
+
+            return `
+                <div class="${cardClass}">
+                    <div class="class-title">${courseName}</div>
+                    <div class="class-room">${room}</div>
+                    <div style="margin-top: 4px; font-size: 0.8em;">${ev.teacher}</div>
+                </div>
+            `;
+        }
+
+        for (let col in columns) {
+            let evs = columns[col];
+            evs.sort((a,b) => a.start - b.start);
+            
+            let i = 0;
+            while (i < evs.length) {
+                let group = [evs[i]];
+                let groupEnd = evs[i].end;
+                let groupStart = evs[i].start;
+                
+                let j = i + 1;
+                // Kiểm tra xem môn tiếp theo có chèn lên giờ môn hiện tại không
+                while (j < evs.length && evs[j].start <= groupEnd) {
+                    group.push(evs[j]);
+                    groupEnd = Math.max(groupEnd, evs[j].end);
+                    j++;
+                }
+                
+                // Nếu không bị trùng
+                if (group.length === 1) {
+                    let g = group[0];
+                    let html = `<div style="grid-column: ${col}; grid-row: ${g.start} / span ${g.span}; z-index: 10;">
+                                    ${getCardHTML(g.ev)}
+                                </div>`;
+                    container.innerHTML += html;
+                } 
+                // Nếu BỊ TRÙNG -> Hiện thẻ cảnh báo Menu Dropdown
+                else {
+                    let listHTML = group.map(g => getCardHTML(g.ev, true)).join('');
+                    let html = `
+                        <div class="overlap-container" style="grid-column: ${col}; grid-row: ${groupStart} / span ${groupEnd - groupStart + 1}; z-index: 20;">
+                            <div class="overlap-trigger">⚠️ Trùng ${group.length} lịch<br>(Rê chuột vào)</div>
+                            <div class="overlap-list">
+                                ${listHTML}
+                            </div>
+                        </div>
+                    `;
+                    container.innerHTML += html;
+                }
+                i = j;
+            }
+        }
     });
 }
 

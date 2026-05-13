@@ -1,22 +1,42 @@
-chrome.runtime.onStartup.addListener(triggerCheck);
+function runSyncIfNeeded(force = false) {
+    chrome.storage.local.get(['last_sync_time', 'sync_interval'], (res) => {
+        const now = Date.now();
+        const lastSync = res.last_sync_time || 0;
+        const intervalHours = res.sync_interval || 3;
+        const cooldown = intervalHours * 60 * 60 * 1000; 
+
+        if (force || now - lastSync >= cooldown) {
+            chrome.storage.local.set({ last_sync_time: now });
+            triggerCheck();
+            checkRoomChanges(); 
+        }
+    });
+}
+
+chrome.runtime.onStartup.addListener(() => {
+    setTimeout(() => { runSyncIfNeeded(false); }, 5000);
+});
+
 chrome.runtime.onInstalled.addListener(() => {
-    chrome.alarms.create("uit_auto_check", { periodInMinutes: 60 });
+    chrome.storage.local.get(['sync_interval'], (res) => {
+        const intervalHours = res.sync_interval || 3;
+        chrome.alarms.create("uit_auto_check", { periodInMinutes: intervalHours * 60 });
+    });
+    setTimeout(() => { runSyncIfNeeded(true); }, 3000);
 });
 
 chrome.alarms.onAlarm.addListener((alarm) => {
-    if (alarm.name === "uit_auto_check") {
-        triggerCheck();
-        checkAnnouncements(); 
-    }
+    if (alarm.name === "uit_auto_check") runSyncIfNeeded(false); 
 });
 
 function triggerCheck() {
     chrome.tabs.create({ url: "https://student.uit.edu.vn/sinhvien/kqhoctap?source=auto_check", active: false });
-    chrome.tabs.create({ url: "https://daa.uit.edu.vn/sinhvien/tkb?source=auto_check", active: false });
-    chrome.tabs.create({ url: "https://daa.uit.edu.vn/sinhvien/lichhoc/lichthi?source=auto_check", active: false });
+    setTimeout(() => { chrome.tabs.create({ url: "https://daa.uit.edu.vn/sinhvien/tkb?source=auto_check", active: false }); }, 2000);
+    setTimeout(() => { chrome.tabs.create({ url: "https://daa.uit.edu.vn/sinhvien/lichhoc/lichthi?source=auto_check", active: false }); }, 4000);
 }
 
-async function checkAnnouncements() {
+// Cào thông báo đổi phòng
+async function checkRoomChanges() {
     const data = await chrome.storage.local.get(['saved_tkb_ics', 'notified_links', 'tkb_alerts']);
     const myCourses = data.saved_tkb_ics || [];
     let notifiedLinks = data.notified_links || []; 
@@ -24,16 +44,10 @@ async function checkAnnouncements() {
     
     if (myCourses.length === 0) return;
 
-    const urlsToCheck = [];
-    for (let i = 0; i <= 3; i++) {
-        urlsToCheck.push(`https://daa.uit.edu.vn/thong-bao-phong-hoc?page=${i}`);
-        urlsToCheck.push(`https://daa.uit.edu.vn/thong-bao-nghi-bu?page=${i}`);
-    }
-
     let hasNew = false;
-    for (const url of urlsToCheck) {
+    for (let i = 0; i <= 3; i++) {
         try {
-            const response = await fetch(url);
+            const response = await fetch(`https://daa.uit.edu.vn/thong-bao-phong-hoc?page=${i}`);
             const htmlText = await response.text();
             const regex = /<h2[^>]*><a href="([^"]+)"[^>]*>(.*?)<\/a><\/h2>/gi;
             let match;
@@ -52,7 +66,7 @@ async function checkAnnouncements() {
                         
                         chrome.notifications.create(`alert_${Date.now()}`, {
                             type: "basic", iconUrl: "https://daa.uit.edu.vn/favicon.ico",
-                            title: "⚠️ Có thay đổi về TKB!", message: `Môn ${course.title} có thông báo: ${articleTitle}`, priority: 2
+                            title: "⚠️ Có đổi phòng học!", message: `Môn ${course.title} có thông báo: ${articleTitle}`, priority: 2
                         });
                         break; 
                     }
@@ -65,13 +79,15 @@ async function checkAnnouncements() {
 }
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.action === "forceSync") runSyncIfNeeded(true); 
+    if (message.action === "updateAlarm") {
+        chrome.alarms.create("uit_auto_check", { periodInMinutes: message.interval * 60 });
+    }
     if (message.action === "notifyUpdates") {
         chrome.notifications.create({
             type: "basic", iconUrl: "https://student.uit.edu.vn/favicon.ico",
             title: message.title, message: message.content, priority: 2
         });
     }
-    if (message.action === "closeAutoTab" && sender.tab) {
-        chrome.tabs.remove(sender.tab.id);
-    }
+    if (message.action === "closeAutoTab" && sender.tab) chrome.tabs.remove(sender.tab.id);
 });

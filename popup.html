@@ -14,12 +14,13 @@
         button { padding: 10px 15px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; }
         button:hover { opacity: 0.8; }
         .btn-save { background: #89b4fa; color: #11111b; }
+        .btn-sync { background: #fab387; color: #11111b; }
         .btn-tkb { background: #a6e3a1; color: #11111b; }
         #status { text-align: center; font-size: 13px; color: #a6e3a1; margin-top: 10px; display: none; }
     </style>
 </head>
 <body>
-    <h2>UIT Extension</h2>
+    <h2>UIT One For All</h2>
     <div class="input-group">
         <label>Mã số sinh viên</label>
         <input type="text" id="username" placeholder="Nhập MSSV...">
@@ -28,8 +29,13 @@
         <label>Mật khẩu</label>
         <input type="password" id="password" placeholder="Nhập mật khẩu...">
     </div>
+    <div class="input-group">
+        <label>Tự động cào (Giờ/lần) - Mặc định: 3</label>
+        <input type="number" id="sync-interval" min="1" max="24" value="3">
+    </div>
     <div class="button-group">
-        <button id="btn-save" class="btn-save">Lưu tài khoản</button>
+        <button id="btn-save" class="btn-save">Lưu Cài Đặt</button>
+        <button id="btn-sync" class="btn-sync">Đồng bộ dữ liệu ngay</button>
         <button id="btn-tkb" class="btn-tkb">Xem Bảng Điều Khiển</button>
     </div>
     <div id="status">Đã lưu thành công!</div>
