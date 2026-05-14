@@ -1,14 +1,14 @@
 (async function () {
     'use strict';
     const host = location.hostname;
-    const url = location.href;
+    const path = window.location.pathname; 
 
-    const isAutoCheck = url.includes('source=auto_check') || url.includes('source%3Dauto_check') || sessionStorage.getItem('uit_auto_check') === 'true';
-    if (url.includes('source=auto_check') || url.includes('source%3Dauto_check')) {
+    const isAutoCheck = location.href.includes('source=auto_check') || sessionStorage.getItem('uit_auto_check') === 'true';
+    if (location.href.includes('source=auto_check')) {
         sessionStorage.setItem('uit_auto_check', 'true');
     }
 
-    const isAutoCheckExam = url.includes('source=auto_check_exam') || url.includes('source%3Dauto_check_exam');
+    const isAutoCheckExam = location.href.includes('source=auto_check_exam');
 
     async function getAccount() {
         return new Promise((resolve) => {
@@ -33,17 +33,19 @@
         passInput.value = acc.password;
 
         const solveCaptchaAndLogin = () => {
+            if (!captchaInput) {
+                setTimeout(() => { submitBtn.click(); }, 600);
+                return true;
+            }
+
             const img = loginForm.querySelector('.english-captcha-image img');
-            if (img && captchaInput) {
+            if (img) {
                 const alt = img.getAttribute('alt');
                 if (alt && alt.includes(':')) {
                     captchaInput.value = alt.split(':')[1].trim();
                     setTimeout(() => { submitBtn.click(); }, 600);
                     return true;
                 }
-            } else if (!loginForm.querySelector('.english-captcha-image')) {
-                setTimeout(() => { submitBtn.click(); }, 600);
-                return true;
             }
             return false;
         };
@@ -52,7 +54,7 @@
             let attempts = 0;
             const interval = setInterval(() => {
                 attempts++;
-                if (solveCaptchaAndLogin() || attempts > 10) clearInterval(interval);
+                if (solveCaptchaAndLogin() || attempts > 20) clearInterval(interval); 
             }, 500);
         }
     }
@@ -70,7 +72,7 @@
     }
 
     async function checkGrades() {
-        if (!url.includes('/sinhvien/kqhoctap')) return;
+        if (!path.includes('/sinhvien/kqhoctap')) return;
         const rows = document.querySelectorAll('table[bordercolor="#000000"] tr');
         let currentGrades = [];
         let currentSemester = "Chưa xác định";
@@ -120,7 +122,7 @@
     }
 
     async function checkExamsTab() {
-        if (!url.includes('/sinhvien/lichhoc/lichthi')) return;
+        if (!path.includes('/sinhvien/lichhoc/lichthi')) return;
         const rows = document.querySelectorAll('table tr');
         let currentExams = [];
         
@@ -160,7 +162,7 @@
     }
 
     async function scrapeTKB_ICS() {
-        if (!url.includes('/sinhvien/tkb')) return;
+        if (!path.includes('/sinhvien/tkb')) return;
         const icsLinkElem = document.querySelector('a[href^="/ics/tkb/"]');
         if (!icsLinkElem) { cleanUpTab(); return; }
 
@@ -298,21 +300,10 @@
                     const dateMatchTitle = articleTitle.match(/ngày\s*(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/i);
                     if (!dateMatchTitle) return;
 
-                    // --- ĐÃ FIX: THUẬT TOÁN SO SÁNH CHUẨN ---
+                    // --- ĐÃ FIX: CHỈ SO SÁNH TRÙNG KHỚP TUYỆT ĐỐI (100% EXACT MATCH) ---
                     const matchedCourse = baseEvents.find(c => {
                         const baseCode = c.title.split(' - ')[0].trim(); 
-                        
-                        // 1. Trùng khớp 100%
-                        if (baseCode === classCode) return true;
-                        
-                        // 2. Thông báo là lớp Lý thuyết chung, nhưng TKB của SV là lớp Thực hành cụ thể (.1, .2) -> Nhận
-                        if (baseCode.startsWith(classCode + '.')) {
-                            const suffix = baseCode.substring(classCode.length + 1);
-                            if (/^\d+$/.test(suffix)) return true; 
-                        }
-
-                        // Đã xóa trường hợp Thông báo là lớp Thực hành nhưng lại "dính" vào lớp Lý thuyết
-                        return false;
+                        return baseCode === classCode;
                     });
                     
                     if (matchedCourse) {
@@ -461,24 +452,23 @@
         if (document.querySelector('#username') && document.querySelector('#password')) {
             runCoursesLogin();
         }
-    } else if (host.includes("oep.uit.edu.vn")) {
+    } else if (host.includes("oep.uit.edu.vn") || host.includes("student.uit.edu.vn") || host.includes("daa.uit.edu.vn")) {
         const loginForm = document.querySelector('#user-login, #user-login-form, form[action*="user/login"]');
-        if (loginForm && !document.querySelector('a[href="/vi/user/logout"]')) {
+        const isLoggedIn = document.querySelector('a[href*="/user/logout"]'); 
+
+        if (loginForm && !isLoggedIn) {
             runDrupalLogin(loginForm); 
         } else {
-            cleanUpTab();
-        }
-    } else if (host.includes("student.uit.edu.vn") || host.includes("daa.uit.edu.vn")) {
-        const loginForm = document.querySelector('#user-login, #user-login-form, form[action*="user/login"]');
-        
-        if (loginForm && !url.includes('/sinhvien/kqhoctap') && !url.includes('/sinhvien/tkb') && !url.includes('/sinhvien/lichhoc/lichthi')) {
-            runDrupalLogin(loginForm); 
-        } else {
-            if (isAutoCheckExam && url.includes('/sinhvien/lichhoc/lichthi')) {
-                checkExamsTab();
+            if (host.includes("oep.uit.edu.vn")) {
+                cleanUpTab(); 
             } else {
-                if (url.includes('/sinhvien/kqhoctap')) checkGrades();
-                if (url.includes('/sinhvien/tkb')) scrapeTKB_ICS();
+                if (isAutoCheckExam && path.includes('/lichhoc/lichthi')) {
+                    checkExamsTab();
+                } else if (path.includes('/sinhvien/kqhoctap')) {
+                    checkGrades();
+                } else if (path.includes('/sinhvien/tkb')) {
+                    scrapeTKB_ICS();
+                }
             }
         }
     }

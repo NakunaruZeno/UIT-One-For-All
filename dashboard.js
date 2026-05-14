@@ -38,12 +38,10 @@ document.addEventListener('DOMContentLoaded', () => {
         chrome.storage.local.set({ exam_params: {lanthi, hocky, namhoc} });
         btn.innerText = "Đang cào dữ liệu ngầm...";
         
-        // Mở tab lịch thi ngầm để đảm bảo cookie hoạt động chuẩn nhất
         const url = `https://student.uit.edu.vn/sinhvien/lichhoc/lichthi?lanthi=${lanthi}&hocky=${hocky}&namhoc=${namhoc}&source=auto_check_exam`;
         chrome.tabs.create({ url: url, active: false });
     });
 
-    // Lắng nghe khi content.js đã cào xong Lịch thi
     chrome.runtime.onMessage.addListener((message) => {
         if (message.action === "examsUpdated") {
             renderExams();
@@ -126,26 +124,44 @@ function renderTKB() {
             const diffWeeks = Math.round(diffTime / (1000 * 60 * 60 * 24 * 7));
 
             if (diffWeeks >= 0 && monday <= evUntil && (diffWeeks % ev.interval === 0)) {
-                if (!ev.isMakeup && !ev.isCancelled) {
+                
+                // 1. Nếu đây là sự kiện "NGHỈ" độc lập, CHẶN không cho vẽ ra TKB để tránh trùng lịch 
+                if (ev.isCancelled) return; 
+
+                let currentEv = ev;
+
+                // 2. Nếu đây là môn học bình thường, đi tìm xem hôm đó nó có bị thông báo NGHỈ không
+                if (!ev.isMakeup) {
                     const eventDate = new Date(monday);
                     eventDate.setDate(monday.getDate() + (ev.dayOfWeek === 8 ? 6 : ev.dayOfWeek - 2));
                     const eventDateStr = `${eventDate.getFullYear()}-${(eventDate.getMonth()+1).toString().padStart(2,'0')}-${eventDate.getDate().toString().padStart(2,'0')}`;
 
-                    const baseEvTitle = ev.title.split('(')[0].trim();
-                    const isCancelledToday = events.some(c => c.isCancelled && c.startDate === eventDateStr && c.title.includes(baseEvTitle));
-                    if (isCancelledToday) return; 
+                    const baseCode = ev.title.split(' - ')[0].trim();
+                    
+                    const isCancelledToday = events.some(c => {
+                        if (!c.isCancelled || c.startDate !== eventDateStr) return false;
+                        const cancelledCode = c.title.split(' ')[0].trim(); // Tách "IE108.Q21 (NGHỈ)" thành "IE108.Q21"
+                        return baseCode === cancelledCode || baseCode.startsWith(cancelledCode + '.');
+                    });
+
+                    if (isCancelledToday) {
+                        // Nếu có nghỉ, Tích hợp trạng thái NGHỈ thẳng vào sự kiện gốc này!
+                        currentEv = Object.assign({}, ev); // Clone ra để không hỏng data gốc
+                        currentEv.isCancelled = true;
+                        currentEv.title = baseCode + " (NGHỈ)";
+                    }
                 }
 
-                let startRow = ev.startTiet + 1;
-                if (ev.startTiet === 0) startRow = 11; 
-                if (ev.startTiet === 11) startRow = 12; 
+                let startRow = currentEv.startTiet + 1;
+                if (currentEv.startTiet === 0) startRow = 11; 
+                if (currentEv.startTiet === 11) startRow = 12; 
 
                 weekEvents.push({
-                    ev: ev,
-                    col: ev.dayOfWeek,
+                    ev: currentEv,
+                    col: currentEv.dayOfWeek,
                     start: startRow,
-                    span: ev.spanTiet,
-                    end: startRow + ev.spanTiet - 1
+                    span: currentEv.spanTiet,
+                    end: startRow + currentEv.spanTiet - 1
                 });
             }
         });
@@ -156,7 +172,7 @@ function renderTKB() {
         function getCardHTML(ev, isItem = false) {
             let cardClass = 'class-card';
             if (ev.isMakeup) cardClass += ' makeup-card';
-            else if (ev.isCancelled) cardClass += ' cancelled-card';
+            else if (ev.isCancelled) cardClass += ' cancelled-card'; // Lớp CSS này sẽ tự động gạch ngang chữ
             else if (ev.title.includes('.1') || ev.fullDesc.includes('HT1') || ev.fullDesc.includes('TH')) cardClass += ' ht1-card';
             if (isItem) cardClass += ' overlap-item';
 
