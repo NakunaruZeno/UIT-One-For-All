@@ -48,13 +48,8 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => statusDiv.style.display = 'none', 3000);
     });
 
+    // Đã đổi lại thành mở Tab mới thay vì mở cửa sổ Window
     tkbBtn.addEventListener('click', () => {
-        chrome.windows.create({
-            url: chrome.runtime.getURL("dashboard.html"),
-            type: "popup",
-            width: 1250,
-            height: 850,
-            focused: true
-        });
+        chrome.tabs.create({ url: chrome.runtime.getURL("dashboard.html") });
     });
 });
