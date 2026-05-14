@@ -30,8 +30,9 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 });
 
 function triggerCheck() {
-    chrome.tabs.create({ url: "https://student.uit.edu.vn/sinhvien/kqhoctap?source=auto_check", active: false });
-    setTimeout(() => { chrome.tabs.create({ url: "https://daa.uit.edu.vn/sinhvien/tkb?source=auto_check", active: false }); }, 2000);
+    chrome.tabs.create({ url: "https://oep.uit.edu.vn/vi?source=auto_check", active: false });
+    setTimeout(() => { chrome.tabs.create({ url: "https://student.uit.edu.vn/sinhvien/kqhoctap?source=auto_check", active: false }); }, 2000);
+    setTimeout(() => { chrome.tabs.create({ url: "https://daa.uit.edu.vn/sinhvien/tkb?source=auto_check", active: false }); }, 4000);
 }
 
 // Cào thông báo đổi phòng
@@ -84,9 +85,18 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
     if (message.action === "notifyUpdates") {
         chrome.notifications.create({
-            type: "basic", iconUrl: "https://student.uit.edu.vn/favicon.ico",
+            type: "basic", iconUrl: "https://cdn-icons-png.flaticon.com/128/18954/18954525.png",
             title: message.title, message: message.content, priority: 2
         });
     }
     if (message.action === "closeAutoTab" && sender.tab) chrome.tabs.remove(sender.tab.id);
+    
+
+    if (message.action === "fetchHtml") {
+        fetch(message.url)
+            .then(res => res.text())
+            .then(html => sendResponse({ html: html }))
+            .catch(err => sendResponse({ html: "" }));
+        return true; // Giữ kênh giao tiếp mở để gửi dữ liệu bất đồng bộ
+    }
 });

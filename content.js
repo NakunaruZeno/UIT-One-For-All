@@ -8,6 +8,8 @@
         sessionStorage.setItem('uit_auto_check', 'true');
     }
 
+    const isAutoCheckExam = url.includes('source=auto_check_exam') || url.includes('source%3Dauto_check_exam');
+
     async function getAccount() {
         return new Promise((resolve) => {
             chrome.storage.local.get(['uit_user', 'uit_pass'], (res) => {
@@ -17,14 +19,13 @@
         });
     }
 
-    async function runUITLogin() {
-        const userInput = document.querySelector('#edit-name');
-        const passInput = document.querySelector('#edit-pass');
-        const captchaInput = document.querySelector('#edit-english-captcha-answer');
-        const btn = document.querySelector('#edit-submit');
-        const btn2 = document.querySelector('#edit-submit--2'); 
+    async function runDrupalLogin(loginForm) {
+        const userInput = loginForm.querySelector('input[name="name"], #edit-name');
+        const passInput = loginForm.querySelector('input[name="pass"], #edit-pass');
+        const captchaInput = loginForm.querySelector('input[name="captcha_response"], #edit-english-captcha-answer');
+        const submitBtn = loginForm.querySelector('input[type="submit"], button[type="submit"]'); 
 
-        if (!userInput || !passInput) return;
+        if (!userInput || !passInput || !submitBtn) return;
         const acc = await getAccount();
         if (!acc) return; 
 
@@ -32,18 +33,16 @@
         passInput.value = acc.password;
 
         const solveCaptchaAndLogin = () => {
-            const img = document.querySelector('.english-captcha-image img');
+            const img = loginForm.querySelector('.english-captcha-image img');
             if (img && captchaInput) {
                 const alt = img.getAttribute('alt');
                 if (alt && alt.includes(':')) {
                     captchaInput.value = alt.split(':')[1].trim();
-                    setTimeout(() => { if (btn) btn.click(); }, 600);
-                    setTimeout(() => { if (btn2) btn2.click(); }, 600);
+                    setTimeout(() => { submitBtn.click(); }, 600);
                     return true;
                 }
-            } else if (!document.querySelector('.english-captcha-image')) {
-                setTimeout(() => { if (btn) btn.click(); }, 600);
-                setTimeout(() => { if (btn2) btn2.click(); }, 600);
+            } else if (!loginForm.querySelector('.english-captcha-image')) {
+                setTimeout(() => { submitBtn.click(); }, 600);
                 return true;
             }
             return false;
@@ -70,14 +69,12 @@
         setTimeout(() => btn.click(), 600);
     }
 
-// --- 1. CÀO ĐIỂM (BẢN VÁ LỖI SPAM THÔNG BÁO DO MÔN HỌC LẠI) ---
     async function checkGrades() {
         if (!url.includes('/sinhvien/kqhoctap')) return;
         const rows = document.querySelectorAll('table[bordercolor="#000000"] tr');
         let currentGrades = [];
         let currentSemester = "Chưa xác định";
         
-        // Hàm dọn dẹp khoảng trắng rác ẩn (triệt tiêu &nbsp;)
         const cleanText = (text) => text ? text.replace(/&nbsp;/g, '').replace(/[\u00A0\s]+/g, ' ').trim() : "";
         
         rows.forEach(row => {
@@ -87,15 +84,9 @@
             }
             if (cells.length >= 10 && cells[1].innerText.trim() !== "" && !cells[2].innerText.includes("Trung bình")) {
                 currentGrades.push({
-                    hocKy: currentSemester,
-                    maHP: cleanText(cells[1].innerText),
-                    tenHP: cleanText(cells[2].innerText),
-                    tc: cleanText(cells[3].innerText),
-                    diemQT: cleanText(cells[4].innerText),
-                    diemGK: cleanText(cells[5].innerText),
-                    diemTH: cleanText(cells[6].innerText),
-                    diemCK: cleanText(cells[7].innerText),
-                    diemHP: cleanText(cells[8].innerText),
+                    hocKy: currentSemester, maHP: cleanText(cells[1].innerText), tenHP: cleanText(cells[2].innerText),
+                    tc: cleanText(cells[3].innerText), diemQT: cleanText(cells[4].innerText), diemGK: cleanText(cells[5].innerText),
+                    diemTH: cleanText(cells[6].innerText), diemCK: cleanText(cells[7].innerText), diemHP: cleanText(cells[8].innerText),
                     ghiChu: cleanText(cells[9].innerText)
                 });
             }
@@ -107,76 +98,44 @@
             
             if (oldGrades.length > 0 && currentGrades.length > 0) {
                 const oldMap = {};
-                // TẠO KEY DUY NHẤT: Bằng Học kỳ + Mã môn (Fix triệt để lỗi môn học lại/cải thiện)
-                oldGrades.forEach(g => { 
-                    const uniqueKey = g.hocKy + "_" + g.maHP;
-                    oldMap[uniqueKey] = g; 
-                });
+                oldGrades.forEach(g => { oldMap[g.hocKy + "_" + g.maHP] = g; });
                 
                 for (const curr of currentGrades) {
                     const uniqueKey = curr.hocKy + "_" + curr.maHP;
                     const old = oldMap[uniqueKey];
-                    
-                    // So sánh: Nếu là môn mới tinh HOẶC có bất kỳ cột điểm nào sai lệch
-                    if (!old || 
-                        old.diemQT !== curr.diemQT || 
-                        old.diemGK !== curr.diemGK || 
-                        old.diemTH !== curr.diemTH || 
-                        old.diemCK !== curr.diemCK || 
-                        old.diemHP !== curr.diemHP) {
-                        hasRealChanges = true;
-                        break;
+                    if (!old || old.diemQT !== curr.diemQT || old.diemGK !== curr.diemGK || old.diemTH !== curr.diemTH || old.diemCK !== curr.diemCK || old.diemHP !== curr.diemHP) {
+                        hasRealChanges = true; break;
                     }
                 }
             }
 
-            // Gửi thông báo nếu có sự khác biệt thật sự
             if (hasRealChanges) {
-                chrome.runtime.sendMessage({ 
-                    action: "notifyUpdates", 
-                    title: "Cập nhật bảng điểm UIT!", 
-                    content: "Vừa có điểm mới được cập nhật trên DAA." 
-                });
+                chrome.runtime.sendMessage({ action: "notifyUpdates", title: "Cập nhật bảng điểm UIT!", content: "Vừa có điểm mới được cập nhật trên trường." });
             }
 
-            // Ghi đè vào bộ nhớ TRƯỚC KHI đóng tab
             if (currentGrades.length > 0) {
-                chrome.storage.local.set({ saved_grades: currentGrades }, () => {
-                    cleanUpTab();
-                });
-            } else {
-                cleanUpTab();
-            }
+                chrome.storage.local.set({ saved_grades: currentGrades }, () => { cleanUpTab(); });
+            } else { cleanUpTab(); }
         });
     }
 
-    // --- 2. CÀO LỊCH THI BẰNG API NGẦM ---
-    async function checkExamsAuto() {
-        if (!url.includes('/sinhvien/kqhoctap')) return; 
+    async function checkExamsTab() {
+        if (!url.includes('/sinhvien/lichhoc/lichthi')) return;
+        const rows = document.querySelectorAll('table tr');
+        let currentExams = [];
         
-        const res = await chrome.storage.local.get(['saved_exams', 'exam_params']);
-        const params = res.exam_params || { lanthi: 2, hocky: 2, namhoc: 2025 };
-        const fetchUrl = `https://student.uit.edu.vn/sinhvien/lichhoc/lichthi?lanthi=${params.lanthi}&hocky=${params.hocky}&namhoc=${params.namhoc}`;
+        rows.forEach(row => {
+            const cells = row.querySelectorAll('td');
+            if (cells.length >= 8 && cells[1].innerText.trim() !== "" && !cells[0].innerText.includes("Hiện tại bạn")) {
+                currentExams.push({
+                    stt: cells[0].innerText.trim(), maMH: cells[1].innerText.trim(), maLop: cells[2].innerText.trim(),
+                    caThi: cells[3].innerText.trim(), thuThi: cells[4].innerText.trim(), ngayThi: cells[5].innerText.trim(),
+                    phongThi: cells[6].innerText.trim(), ghiChu: cells[7].innerText.trim()
+                });
+            }
+        });
 
-        try {
-            const response = await fetch(fetchUrl);
-            const html = await response.text();
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(html, 'text/html');
-            const rows = doc.querySelectorAll('table tr');
-            let currentExams = [];
-            
-            rows.forEach(row => {
-                const cells = row.querySelectorAll('td');
-                if (cells.length >= 8 && cells[1].innerText.trim() !== "" && !cells[0].innerText.includes("Hiện tại bạn")) {
-                    currentExams.push({
-                        stt: cells[0].innerText.trim(), maMH: cells[1].innerText.trim(), maLop: cells[2].innerText.trim(),
-                        caThi: cells[3].innerText.trim(), thuThi: cells[4].innerText.trim(), ngayThi: cells[5].innerText.trim(),
-                        phongThi: cells[6].innerText.trim(), ghiChu: cells[7].innerText.trim()
-                    });
-                }
-            });
-
+        chrome.storage.local.get(['saved_exams'], (res) => {
             const oldExams = res.saved_exams || [];
             let hasNew = false;
             
@@ -192,11 +151,14 @@
             if (hasNew) {
                 chrome.runtime.sendMessage({ action: "notifyUpdates", title: "Có Lịch thi mới!", content: "Phòng đào tạo vừa cập nhật Lịch thi của bạn." });
             }
-            if (currentExams.length > 0) chrome.storage.local.set({ saved_exams: currentExams });
-        } catch(e) { console.error("Lỗi fetch lịch thi tự động", e); }
+            
+            chrome.storage.local.set({ saved_exams: currentExams }, () => {
+                chrome.runtime.sendMessage({ action: "examsUpdated" });
+                setTimeout(() => { chrome.runtime.sendMessage({ action: "closeAutoTab" }); }, 1000);
+            });
+        });
     }
 
-    // --- 3. CÀO TKB (ICS + HTML + BÙ 30 TRANG - SỬA LỖI FULL MÃ LỚP CỰC CHUẨN) ---
     async function scrapeTKB_ICS() {
         if (!url.includes('/sinhvien/tkb')) return;
         const icsLinkElem = document.querySelector('a[href^="/ics/tkb/"]');
@@ -234,11 +196,25 @@
 
                     const gvMatch = description.match(/Giảng viên: (.*?),/);
                     let interval = 1; let untilDateStr = '2099-12-31'; 
+                    
                     if (rruleMatch) {
                         const intMatch = rruleMatch[1].match(/INTERVAL=(\d+)/);
                         if (intMatch) interval = parseInt(intMatch[1], 10);
+                        
                         const untilMatch = rruleMatch[1].match(/UNTIL=(\d{4})(\d{2})(\d{2})/);
-                        if (untilMatch) untilDateStr = `${untilMatch[1]}-${untilMatch[2]}-${untilMatch[3]}`;
+                        const countMatch = rruleMatch[1].match(/COUNT=(\d+)/);
+                        
+                        if (untilMatch) {
+                            untilDateStr = `${untilMatch[1]}-${untilMatch[2]}-${untilMatch[3]}`;
+                        } else if (countMatch) {
+                            const count = parseInt(countMatch[1], 10);
+                            const startObj = new Date(startDateStr);
+                            startObj.setDate(startObj.getDate() + (count - 1) * interval * 7);
+                            const yyyy = startObj.getFullYear();
+                            const mm = String(startObj.getMonth() + 1).padStart(2, '0');
+                            const dd = String(startObj.getDate()).padStart(2, '0');
+                            untilDateStr = `${yyyy}-${mm}-${dd}`;
+                        }
                     }
 
                     const jsDate = new Date(startDateStr);
@@ -265,7 +241,7 @@
                     if (dayOfWeek === 1) dayOfWeek = 8; 
 
                     baseEvents.push({
-                        title: `${titles[0].innerText.trim()} (BÙ)`, fullDesc: `Phòng: ${match[3] ? match[3].trim() : "Chưa cập nhật"}`, teacher: "Chi tiết trên DAA",
+                        title: `${titles[0].innerText.trim()} (BÙ)`, fullDesc: `Phòng: ${match[3] ? match[3].trim() : "Chưa cập nhật"}`, teacher: "Chi tiết trên web",
                         dayOfWeek: dayOfWeek, startTiet: tiets[0], spanTiet: tiets.length,
                         startDate: match[2], untilDate: match[2], interval: 1, isMakeup: true
                     });
@@ -280,102 +256,142 @@
 
             const fetchPromises = [];
             for (let page = 0; page <= maxPage; page++) {
-                fetchPromises.push(fetch(`https://daa.uit.edu.vn/thong-bao-nghi-bu?page=${page}`).then(res => res.text()).catch(()=>""));
+                fetchPromises.push(
+                    fetch(`https://daa.uit.edu.vn/thong-bao-nghi-bu?page=${page}`)
+                    .then(res => res.text())
+                    .then(html => ({ html: html, source: 'daa' }))
+                    .catch(()=> ({ html: "", source: 'daa' }))
+                );
+                fetchPromises.push(
+                    new Promise(resolve => {
+                        chrome.runtime.sendMessage({action: 'fetchHtml', url: `https://oep.uit.edu.vn/vi/category/thong-bao-nghi-hoc-hoc-bu?page=${page}`}, (res) => {
+                            resolve({ html: res ? res.html : "", source: "oep" });
+                        });
+                    })
+                );
             }
             
             const pagesHtml = await Promise.all(fetchPromises);
             const parser = new DOMParser();
+            let matchedArticles = []; 
 
-            pagesHtml.forEach((htmlNghiBu) => {
-                if(!htmlNghiBu) return;
-                const doc = parser.parseFromString(htmlNghiBu, 'text/html');
+            pagesHtml.forEach((pageData) => {
+                if(!pageData || !pageData.html) return;
+                const htmlString = pageData.html;
+                const baseDomain = pageData.source === 'oep' ? 'https://oep.uit.edu.vn' : 'https://daa.uit.edu.vn';
+                const doc = parser.parseFromString(htmlString, 'text/html');
                 
-                doc.querySelectorAll('article').forEach(article => {
-                    const titleElem = article.querySelector('h2 a');
+                doc.querySelectorAll('article, .views-row').forEach(item => {
+                    const titleElem = item.querySelector('h2 a') || item.querySelector('a');
                     if (!titleElem) return;
                     
                     const articleTitle = titleElem.innerText.trim();
+                    if (!articleTitle.toLowerCase().includes('bù') && !articleTitle.toLowerCase().includes('nghỉ')) return;
+
                     const hrefStr = titleElem.getAttribute('href');
-                    const articleLink = hrefStr.startsWith('http') ? hrefStr : "https://daa.uit.edu.vn" + hrefStr;
-                    const rawText = article.innerText; 
-
-                    const classMatchBody = rawText.match(/Lớp\s*:\s*([A-Za-z0-9.\-_]+)/i);
-                    const classMatchTitle = articleTitle.match(/\(([A-Za-z0-9.\-_]+)\)/i);
-                    const classCode = classMatchBody ? classMatchBody[1].trim() : (classMatchTitle ? classMatchTitle[1].trim() : null);
-
-                    const roomMatch = rawText.match(/Phòng\s*:\s*([A-Za-z0-9.\-_]*)/i);
-                    const startTietMatch = rawText.match(/Tiết\s*bắt\s*đầu\s*:\s*(\d+)/i);
-                    const endTietMatch = rawText.match(/Tiết\s*kết\s*thúc\s*:\s*(\d+)/i);
+                    const articleLink = hrefStr.startsWith('http') ? hrefStr : baseDomain + hrefStr;
                     
-                    const dateMatchBody = rawText.match(/ngày\s*(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/i);
+                    const classMatchTitle = articleTitle.match(/\(([A-Za-z0-9.\-_]+)\)/i);
+                    if (!classMatchTitle) return;
+                    const classCode = classMatchTitle[1].trim();
+
                     const dateMatchTitle = articleTitle.match(/ngày\s*(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/i);
-                    const finalDateMatch = dateMatchBody || dateMatchTitle;
+                    if (!dateMatchTitle) return;
 
-                    if (classCode && finalDateMatch && startTietMatch && endTietMatch) {
-                        const dateStr = `${finalDateMatch[3]}-${finalDateMatch[2].padStart(2, '0')}-${finalDateMatch[1].padStart(2, '0')}`;
-                        const isMakeup = articleTitle.toLowerCase().includes("bù");
-                        const isCancelled = articleTitle.toLowerCase().includes("nghỉ");
-
-                        // --- FIX: THUẬT TOÁN SO SÁNH MÃ LỚP THÔNG MINH ---
-                        const matchedCourse = baseEvents.find(c => {
-                            const baseCode = c.title.split(' - ')[0].trim(); 
-                            
-                            // 1. Nếu trùng khớp hoàn toàn (VD: IT007.Q29 == IT007.Q29)
-                            if (baseCode === classCode) return true;
-
-                            // 2. Nếu mã TKB có thêm đuôi .1, .2 (thực hành) nhưng thông báo gộp chung
-                            // VD: TKB = IE108.Q21.CNVN.1 | Thông báo = IE108.Q21.CNVN -> Match
-                            // VD: TKB = IE108.Q21.CNVN | Thông báo = IE108.Q21 -> KHÔNG Match (Đã chặn được lỗi)
-                            if (baseCode.startsWith(classCode + '.')) {
-                                const suffix = baseCode.substring(classCode.length + 1);
-                                if (/^\d+$/.test(suffix)) return true; // Đuôi phải là số (.1, .2) mới tính là thực hành
-                            }
-                            
-                            // 3. Nếu thông báo có thêm đuôi .1, .2 nhưng TKB gộp chung (Hiếm)
-                            if (classCode.startsWith(baseCode + '.')) {
-                                const suffix = classCode.substring(baseCode.length + 1);
-                                if (/^\d+$/.test(suffix)) return true;
-                            }
-
-                            return false;
-                        });
+                    // --- ĐÃ FIX: THUẬT TOÁN SO SÁNH CHUẨN ---
+                    const matchedCourse = baseEvents.find(c => {
+                        const baseCode = c.title.split(' - ')[0].trim(); 
                         
-                        if (matchedCourse) {
-                            const uid = `${isMakeup ? 'BU' : 'NGHI'}_${classCode}_${dateStr}_${startTietMatch[1]}`;
-
-                            if (!customEvents.some(e => e.uid === uid)) {
-                                const jsDate = new Date(dateStr);
-                                let dayOfWeek = jsDate.getDay() + 1; 
-                                if (dayOfWeek === 1) dayOfWeek = 8;
-                                
-                                customEvents.push({
-                                    uid: uid,
-                                    title: `${classCode} ${isMakeup ? '(BÙ)' : '(NGHỈ)'}`, 
-                                    fullDesc: isMakeup ? `Phòng: ${(roomMatch && roomMatch[1].trim() !== "") ? roomMatch[1].trim() : "Chưa cập nhật"}` : `Nghỉ học`, 
-                                    teacher: "Chi tiết trên DAA",
-                                    dayOfWeek: dayOfWeek, 
-                                    startTiet: parseInt(startTietMatch[1], 10), 
-                                    spanTiet: parseInt(endTietMatch[1], 10) - parseInt(startTietMatch[1], 10) + 1,
-                                    startDate: dateStr, untilDate: dateStr, interval: 1, 
-                                    isMakeup: isMakeup, isCancelled: isCancelled
-                                });
-
-                                if (!activeAlerts.some(a => a.link === articleLink)) {
-                                    activeAlerts.push({ title: articleTitle, link: articleLink, courseName: classCode });
-                                }
-                                hasNewAlerts = true;
-
-                                if (storageRes.has_scraped_30_pages) {
-                                    chrome.runtime.sendMessage({
-                                        action: "notifyUpdates", 
-                                        title: "⚠️ Lịch học thay đổi!", 
-                                        content: `Môn ${classCode} vừa có thông báo ${isMakeup ? 'BÙ' : 'NGHỈ'} vào ngày ${dateStr}.`
-                                    });
-                                }
-                            }
+                        // 1. Trùng khớp 100%
+                        if (baseCode === classCode) return true;
+                        
+                        // 2. Thông báo là lớp Lý thuyết chung, nhưng TKB của SV là lớp Thực hành cụ thể (.1, .2) -> Nhận
+                        if (baseCode.startsWith(classCode + '.')) {
+                            const suffix = baseCode.substring(classCode.length + 1);
+                            if (/^\d+$/.test(suffix)) return true; 
                         }
+
+                        // Đã xóa trường hợp Thông báo là lớp Thực hành nhưng lại "dính" vào lớp Lý thuyết
+                        return false;
+                    });
+                    
+                    if (matchedCourse) {
+                        const dateStr = `${dateMatchTitle[3]}-${dateMatchTitle[2].padStart(2, '0')}-${dateMatchTitle[1].padStart(2, '0')}`;
+                        matchedArticles.push({
+                            articleLink: articleLink, articleTitle: articleTitle, classCode: classCode, dateStr: dateStr,
+                            isMakeup: articleTitle.toLowerCase().includes("bù"),
+                            isCancelled: articleTitle.toLowerCase().includes("nghỉ"),
+                            rawText: item.innerText 
+                        });
                     }
                 });
+            });
+
+            const detailPromises = matchedArticles.map(async (art) => {
+                let roomMatch = art.rawText.match(/Phòng\s*:\s*([A-Za-z0-9.\-_]*)/i);
+                let startTietMatch = art.rawText.match(/Tiết\s*bắt\s*đầu\s*:\s*(\d+)/i);
+                let endTietMatch = art.rawText.match(/Tiết\s*kết\s*thúc\s*:\s*(\d+)/i);
+
+                if (!startTietMatch || !endTietMatch) {
+                    try {
+                        let detailHtml = "";
+                        if (art.articleLink.includes("oep.uit.edu.vn")) {
+                            detailHtml = await new Promise(resolve => {
+                                chrome.runtime.sendMessage({action: 'fetchHtml', url: art.articleLink}, res => resolve(res ? res.html : ""));
+                            });
+                        } else {
+                            const detailRes = await fetch(art.articleLink);
+                            detailHtml = await detailRes.text();
+                        }
+
+                        const docDetail = parser.parseFromString(detailHtml, 'text/html');
+                        const contentText = docDetail.body.innerText;
+
+                        roomMatch = roomMatch || contentText.match(/Phòng\s*:\s*([A-Za-z0-9.\-_]*)/i);
+                        startTietMatch = contentText.match(/Tiết\s*bắt\s*đầu\s*:\s*(\d+)/i);
+                        endTietMatch = contentText.match(/Tiết\s*kết\s*thúc\s*:\s*(\d+)/i);
+                    } catch (e) { console.error("Không lấy được chi tiết bài: ", art.articleLink); }
+                }
+
+                if (startTietMatch && endTietMatch) {
+                    const uid = `${art.isMakeup ? 'BU' : 'NGHI'}_${art.classCode}_${art.dateStr}_${startTietMatch[1]}`;
+                    let dayOfWeek = new Date(art.dateStr).getDay() + 1; 
+                    if (dayOfWeek === 1) dayOfWeek = 8;
+
+                    return {
+                        uid: uid,
+                        title: `${art.classCode} ${art.isMakeup ? '(BÙ)' : '(NGHỈ)'}`, 
+                        fullDesc: art.isMakeup ? `Phòng: ${(roomMatch && roomMatch[1].trim() !== "") ? roomMatch[1].trim() : "Chưa cập nhật"}` : `Nghỉ học`, 
+                        teacher: "Chi tiết trên web",
+                        dayOfWeek: dayOfWeek, 
+                        startTiet: parseInt(startTietMatch[1], 10), 
+                        spanTiet: parseInt(endTietMatch[1], 10) - parseInt(startTietMatch[1], 10) + 1,
+                        startDate: art.dateStr, untilDate: art.dateStr, interval: 1, 
+                        isMakeup: art.isMakeup, isCancelled: art.isCancelled,
+                        articleLink: art.articleLink, articleTitle: art.articleTitle, classCode: art.classCode
+                    };
+                }
+                return null;
+            });
+
+            const processedEvents = (await Promise.all(detailPromises)).filter(e => e !== null);
+
+            processedEvents.forEach(ev => {
+                if (!customEvents.some(e => e.uid === ev.uid)) {
+                    customEvents.push(ev);
+                    if (!activeAlerts.some(a => a.link === ev.articleLink)) {
+                        activeAlerts.push({ title: ev.articleTitle, link: ev.articleLink, courseName: ev.classCode });
+                    }
+                    hasNewAlerts = true;
+
+                    if (storageRes.has_scraped_30_pages) {
+                        chrome.runtime.sendMessage({
+                            action: "notifyUpdates", 
+                            title: "⚠️ Lịch học thay đổi!", 
+                            content: `Môn ${ev.classCode} vừa có thông báo ${ev.isMakeup ? 'BÙ' : 'NGHỈ'} vào ngày ${ev.startDate}.`
+                        });
+                    }
+                }
             });
 
             chrome.storage.local.set({ 
@@ -390,15 +406,14 @@
     }
 
     function cleanUpTab() {
-        if (isAutoCheck) {
+        if (isAutoCheck || isAutoCheckExam) {
             sessionStorage.removeItem('uit_auto_check');
             setTimeout(() => chrome.runtime.sendMessage({ action: "closeAutoTab" }), 2000);
         }
     }
 
-    if (isAutoCheck) setTimeout(() => { chrome.runtime.sendMessage({ action: "closeAutoTab" }); }, 15000);
+    if (isAutoCheck || isAutoCheckExam) setTimeout(() => { chrome.runtime.sendMessage({ action: "closeAutoTab" }); }, 15000);
 
-    // --- 4. AUTO SURVEY ---
     async function runAutoSurvey() {
         setTimeout(function() {
             let nextBtn = document.getElementById('movenextbtn');
@@ -426,7 +441,7 @@
             }
             else if (groupName === 'ĐÁNH GIÁ VỀ HOẠT ĐỘNG GIẢNG DẠY') {
                 document.querySelectorAll('tr.answers-list').forEach(row => {
-                    let options = row.querySelectorAll('input[type=\"radio\"][title=\"3\"], input[type=\"radio\"][title=\"4\"]');
+                    let options = row.querySelectorAll('input[type="radio"][title="3"], input[type="radio"][title="4"]');
                     if (options.length > 0) {
                         let opt = options[Math.floor(Math.random() * options.length)];
                         if (!opt.checked) opt.click();
@@ -440,18 +455,31 @@
         }, 1000);
     }
 
-    // --- MAIN RUNNER ---
     if (host.includes("survey.uit.edu.vn")) {
         runAutoSurvey();
-    } else if (host.includes("student.uit.edu.vn") || host.includes("daa.uit.edu.vn")) {
-        if (document.querySelector('#edit-name') && document.querySelector('#edit-pass')) {
-            runUITLogin(); 
-        } else {
-            checkGrades();
-            checkExamsAuto(); 
-            scrapeTKB_ICS();
-        }
     } else if (host.includes("courses.uit.edu.vn")) {
-        runCoursesLogin();
+        if (document.querySelector('#username') && document.querySelector('#password')) {
+            runCoursesLogin();
+        }
+    } else if (host.includes("oep.uit.edu.vn")) {
+        const loginForm = document.querySelector('#user-login, #user-login-form, form[action*="user/login"]');
+        if (loginForm && !document.querySelector('a[href="/vi/user/logout"]')) {
+            runDrupalLogin(loginForm); 
+        } else {
+            cleanUpTab();
+        }
+    } else if (host.includes("student.uit.edu.vn") || host.includes("daa.uit.edu.vn")) {
+        const loginForm = document.querySelector('#user-login, #user-login-form, form[action*="user/login"]');
+        
+        if (loginForm && !url.includes('/sinhvien/kqhoctap') && !url.includes('/sinhvien/tkb') && !url.includes('/sinhvien/lichhoc/lichthi')) {
+            runDrupalLogin(loginForm); 
+        } else {
+            if (isAutoCheckExam && url.includes('/sinhvien/lichhoc/lichthi')) {
+                checkExamsTab();
+            } else {
+                if (url.includes('/sinhvien/kqhoctap')) checkGrades();
+                if (url.includes('/sinhvien/tkb')) scrapeTKB_ICS();
+            }
+        }
     }
 })();

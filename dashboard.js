@@ -28,49 +28,33 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('alert-container').style.display = 'none';
     });
 
-    // --- SỰ KIỆN TẢI LỊCH THI MỚI ---
-    document.getElementById('btn-fetch-exams').addEventListener('click', async () => {
+    // --- SỰ KIỆN TẢI LỊCH THI BẰNG TAB ẨN ---
+    document.getElementById('btn-fetch-exams').addEventListener('click', () => {
         const btn = document.getElementById('btn-fetch-exams');
         const lanthi = document.getElementById('exam-type').value;
         const hocky = document.getElementById('exam-term').value;
         const namhoc = document.getElementById('exam-year').value;
         
         chrome.storage.local.set({ exam_params: {lanthi, hocky, namhoc} });
-        btn.innerText = "Đang tải...";
+        btn.innerText = "Đang cào dữ liệu ngầm...";
         
-        try {
-            const url = `https://student.uit.edu.vn/sinhvien/lichhoc/lichthi?lanthi=${lanthi}&hocky=${hocky}&namhoc=${namhoc}`;
-            const res = await fetch(url);
-            const html = await res.text();
-            
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(html, 'text/html');
-            const rows = doc.querySelectorAll('table tr');
-            let currentExams = [];
-            
-            rows.forEach(row => {
-                const cells = row.querySelectorAll('td');
-                if (cells.length >= 8 && cells[1].innerText.trim() !== "" && !cells[0].innerText.includes("Hiện tại bạn")) {
-                    currentExams.push({
-                        stt: cells[0].innerText.trim(), maMH: cells[1].innerText.trim(), maLop: cells[2].innerText.trim(),
-                        caThi: cells[3].innerText.trim(), thuThi: cells[4].innerText.trim(), ngayThi: cells[5].innerText.trim(),
-                        phongThi: cells[6].innerText.trim(), ghiChu: cells[7].innerText.trim()
-                    });
-                }
-            });
+        // Mở tab lịch thi ngầm để đảm bảo cookie hoạt động chuẩn nhất
+        const url = `https://student.uit.edu.vn/sinhvien/lichhoc/lichthi?lanthi=${lanthi}&hocky=${hocky}&namhoc=${namhoc}&source=auto_check_exam`;
+        chrome.tabs.create({ url: url, active: false });
+    });
 
-            chrome.storage.local.set({ saved_exams: currentExams });
+    // Lắng nghe khi content.js đã cào xong Lịch thi
+    chrome.runtime.onMessage.addListener((message) => {
+        if (message.action === "examsUpdated") {
             renderExams();
-            
-            btn.innerText = "Đã cập nhật!";
-            setTimeout(() => { btn.innerText = "Cập nhật Lịch Thi"; }, 2000);
-        } catch(e) {
-            btn.innerText = "Lỗi kết nối!";
-            setTimeout(() => { btn.innerText = "Cập nhật Lịch Thi"; }, 2000);
+            const btn = document.getElementById('btn-fetch-exams');
+            if (btn) {
+                btn.innerText = "Đã cập nhật!";
+                setTimeout(() => { btn.innerText = "Cập nhật Lịch Thi"; }, 2000);
+            }
         }
     });
 
-    // Khôi phục tùy chọn Lịch Thi cũ
     chrome.storage.local.get(['exam_params'], (res) => {
         if(res.exam_params) {
             document.getElementById('exam-type').value = res.exam_params.lanthi;

@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "UIT One For All",
-  "version": "1.3",
+  "version": "1.3.1",
   "description": "Auto Login, Cào Điểm, Lịch Thi, TKB ICS, Cảnh báo Lịch học & Auto Survey",
   "author": "NakunaruZeno",
   "action": {
@@ -19,7 +19,8 @@
     "*://student.uit.edu.vn/*",
     "*://courses.uit.edu.vn/*",
     "*://daa.uit.edu.vn/*",
-    "*://survey.uit.edu.vn/*"
+    "*://survey.uit.edu.vn/*",
+    "*://oep.uit.edu.vn/*"
   ],
   "background": {
     "service_worker": "background.js"
@@ -30,7 +31,8 @@
         "*://student.uit.edu.vn/*",
         "*://courses.uit.edu.vn/*",
         "*://daa.uit.edu.vn/*",
-        "*://survey.uit.edu.vn/*"
+        "*://survey.uit.edu.vn/*",
+        "*://oep.uit.edu.vn/*"
       ],
       "js": ["content.js"],
       "run_at": "document_idle"
