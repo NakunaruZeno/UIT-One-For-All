@@ -10,15 +10,61 @@
 
     const isAutoCheckExam = location.href.includes('source=auto_check_exam');
 
-    async function getAccount() {
+    // ==========================================
+    // MODULE BẢO MẬT
+    // ==========================================
+    function base64ToBuffer(base64) {
+        const binary_string = window.atob(base64);
+        const bytes = new Uint8Array(binary_string.length);
+        for (let i = 0; i < binary_string.length; i++) bytes[i] = binary_string.charCodeAt(i);
+        return bytes.buffer;
+    }
+
+    async function getAesKey() {
         return new Promise((resolve) => {
-            chrome.storage.local.get(['uit_user', 'uit_pass'], (res) => {
-                if (res.uit_user && res.uit_pass) resolve({ username: res.uit_user, password: atob(res.uit_pass) });
-                else resolve(null);
+            chrome.storage.local.get(['aes_key'], async (res) => {
+                if (res.aes_key) {
+                    const key = await crypto.subtle.importKey("jwk", res.aes_key, { name: "AES-GCM" }, true, ["encrypt", "decrypt"]);
+                    resolve(key);
+                } else resolve(null);
             });
         });
     }
 
+    async function decryptPassword(cipherBase64, ivBase64) {
+        const key = await getAesKey();
+        if (!key) return null;
+        try {
+            const encryptedBytes = base64ToBuffer(cipherBase64);
+            const ivBytes = base64ToBuffer(ivBase64);
+            const decrypted = await crypto.subtle.decrypt({ name: "AES-GCM", iv: ivBytes }, key, encryptedBytes);
+            return new TextDecoder().decode(decrypted);
+        } catch (e) {
+            console.error("Lỗi giải mã mật khẩu", e);
+            return null;
+        }
+    }
+
+    // Lấy tài khoản
+    async function getAccount() {
+        return new Promise((resolve) => {
+            chrome.storage.local.get(['uit_user', 'uit_pass_cipher', 'uit_pass_iv', 'uit_pass'], async (res) => {
+                if (res.uit_user && res.uit_pass_cipher && res.uit_pass_iv) {
+                    const pass = await decryptPassword(res.uit_pass_cipher, res.uit_pass_iv);
+                    resolve({ username: res.uit_user, password: pass });
+                } else if (res.uit_user && res.uit_pass) {
+                    // Tương thích ngược: Nếu người dùng chưa cập nhật mk thì vẫn dùng btoa cũ
+                    resolve({ username: res.uit_user, password: atob(res.uit_pass) });
+                } else {
+                    resolve(null);
+                }
+            });
+        });
+    }
+
+    // ==========================================
+    // MODULE ĐĂNG NHẬP (TRUYỀN THỐNG)
+    // ==========================================
     async function runDrupalLogin(loginForm) {
         const userInput = loginForm.querySelector('input[name="name"], #edit-name');
         const passInput = loginForm.querySelector('input[name="pass"], #edit-pass');
@@ -26,6 +72,8 @@
         const submitBtn = loginForm.querySelector('input[type="submit"], button[type="submit"]'); 
 
         if (!userInput || !passInput || !submitBtn) return;
+        
+        // Gọi hàm giải mã
         const acc = await getAccount();
         if (!acc) return; 
 

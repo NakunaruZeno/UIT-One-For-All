@@ -1,25 +1,23 @@
 let currentViewDate = new Date(); 
 
 function getMonday(d) {
-    d = new Date(d);
-    var day = d.getDay(), diff = d.getDate() - day + (day === 0 ? -6 : 1); 
-    return new Date(d.setDate(diff));
+    let day = d.getDay(), diff = d.getDate() - day + (day === 0 ? -6 : 1); 
+    return new Date(new Date(d).setDate(diff));
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    const tabBtns = document.querySelectorAll('.tab-btn');
-    tabBtns.forEach(btn => {
+    // Xử lý chuyển Tab
+    document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
-            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn, .tab-content').forEach(el => el.classList.remove('active'));
             e.currentTarget.classList.add('active');
-            const targetId = e.currentTarget.getAttribute('data-tab');
-            document.getElementById(targetId).classList.add('active');
+            document.getElementById(e.currentTarget.getAttribute('data-tab')).classList.add('active');
         });
     });
 
     initGridBackground();
 
+    // Sự kiện nút bấm
     document.getElementById('btn-prev').addEventListener('click', () => changeWeek(-7));
     document.getElementById('btn-next').addEventListener('click', () => changeWeek(7));
     
@@ -28,7 +26,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('alert-container').style.display = 'none';
     });
 
-    // --- SỰ KIỆN TẢI LỊCH THI BẰNG TAB ẨN ---
     document.getElementById('btn-fetch-exams').addEventListener('click', () => {
         const btn = document.getElementById('btn-fetch-exams');
         const lanthi = document.getElementById('exam-type').value;
@@ -36,10 +33,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const namhoc = document.getElementById('exam-year').value;
         
         chrome.storage.local.set({ exam_params: {lanthi, hocky, namhoc} });
-        btn.innerText = "Đang cào dữ liệu ngầm...";
+        btn.textContent = "Đang cào dữ liệu ngầm...";
         
-        const url = `https://student.uit.edu.vn/sinhvien/lichhoc/lichthi?lanthi=${lanthi}&hocky=${hocky}&namhoc=${namhoc}&source=auto_check_exam`;
-        chrome.tabs.create({ url: url, active: false });
+        chrome.tabs.create({ url: `https://student.uit.edu.vn/sinhvien/lichhoc/lichthi?lanthi=${lanthi}&hocky=${hocky}&namhoc=${namhoc}&source=auto_check_exam`, active: false });
     });
 
     chrome.runtime.onMessage.addListener((message) => {
@@ -47,8 +43,8 @@ document.addEventListener('DOMContentLoaded', () => {
             renderExams();
             const btn = document.getElementById('btn-fetch-exams');
             if (btn) {
-                btn.innerText = "Đã cập nhật!";
-                setTimeout(() => { btn.innerText = "Cập nhật Lịch Thi"; }, 2000);
+                btn.textContent = "Đã cập nhật!";
+                setTimeout(() => { btn.textContent = "Cập nhật Lịch Thi"; }, 2000);
             }
         }
     });
@@ -67,19 +63,31 @@ document.addEventListener('DOMContentLoaded', () => {
     renderExams();
 });
 
+// DOM Builder an toàn thay cho innerHTML
+function createEl(tag, className = '', textContent = '') {
+    const el = document.createElement(tag);
+    if (className) el.className = className;
+    if (textContent) el.textContent = textContent;
+    return el;
+}
+
 function initGridBackground() {
     const dynamicClasses = document.getElementById('dynamic-classes');
     const times = ["(7:30 - 8:15)", "(8:15 - 9:00)", "(9:00 - 9:45)", "(10:00 - 10:45)", "(10:45 - 11:30)", "(13:00 - 13:45)", "(13:45 - 14:30)", "(14:30 - 15:15)", "(15:30 - 16:15)", "(16:15 - 17:00)", "(17:45 - 20:45)"];
     const tietNames = ["Tiết 1", "Tiết 2", "Tiết 3", "Tiết 4", "Tiết 5", "Tiết 6", "Tiết 7", "Tiết 8", "Tiết 9", "Tiết 10", "Buổi tối"];
     
-    let gridHTML = '';
     for(let i=0; i<11; i++) {
-        gridHTML += `<div class="time-col" style="grid-column: 1; grid-row: ${i+2}">${tietNames[i]}<br>${times[i]}</div>`;
+        const timeCol = createEl('div', 'time-col');
+        timeCol.style.gridColumn = '1'; timeCol.style.gridRow = i+2;
+        timeCol.innerHTML = `${tietNames[i]}<br>${times[i]}`; // Nội dung tĩnh tĩnh an toàn
+        dynamicClasses.parentNode.insertBefore(timeCol, dynamicClasses);
+        
         for(let j=2; j<=7; j++) {
-            gridHTML += `<div class="tkb-cell" style="grid-column: ${j}; grid-row: ${i+2}"></div>`;
+            const cell = createEl('div', 'tkb-cell');
+            cell.style.gridColumn = j; cell.style.gridRow = i+2;
+            dynamicClasses.parentNode.insertBefore(cell, dynamicClasses);
         }
     }
-    dynamicClasses.insertAdjacentHTML('beforebegin', gridHTML);
 }
 
 function changeWeek(days) {
@@ -92,9 +100,17 @@ function renderAlerts() {
         if (res.tkb_alerts && res.tkb_alerts.length > 0) {
             document.getElementById('alert-container').style.display = 'block';
             const ul = document.getElementById('alert-list');
-            ul.innerHTML = '';
+            ul.textContent = ''; // Xóa sạch an toàn
             res.tkb_alerts.forEach(alert => {
-                ul.innerHTML += `<li style="margin-bottom: 8px;">Môn <b>${alert.courseName}</b>: ${alert.title} <a href="${alert.link}" target="_blank">🔗 Xem chi tiết</a></li>`;
+                const li = createEl('li');
+                li.style.marginBottom = '8px';
+                
+                const b = createEl('b', '', alert.courseName);
+                const a = createEl('a', '', '🔗 Xem chi tiết');
+                a.href = alert.link; a.target = '_blank';
+                
+                li.append("Môn ", b, `: ${alert.title} `, a);
+                ul.appendChild(li);
             });
         }
     });
@@ -102,16 +118,15 @@ function renderAlerts() {
 
 function renderTKB() {
     const monday = getMonday(currentViewDate);
-    const sunday = new Date(monday);
-    sunday.setDate(sunday.getDate() + 6);
+    const sunday = new Date(monday); sunday.setDate(sunday.getDate() + 6);
 
-    const formatDate = (date) => `${date.getDate().toString().padStart(2,'0')}/${(date.getMonth()+1).toString().padStart(2,'0')}/${date.getFullYear()}`;
-    document.getElementById('week-display').innerText = `Tuần: ${formatDate(monday)} -> ${formatDate(sunday)}`;
+    const pad = (n) => n.toString().padStart(2, '0');
+    document.getElementById('week-display').textContent = `Tuần: ${pad(monday.getDate())}/${pad(monday.getMonth()+1)}/${monday.getFullYear()} -> ${pad(sunday.getDate())}/${pad(sunday.getMonth()+1)}/${sunday.getFullYear()}`;
 
     chrome.storage.local.get(['saved_tkb_ics'], (res) => {
         const events = res.saved_tkb_ics || [];
         const container = document.getElementById('dynamic-classes');
-        container.innerHTML = ''; 
+        container.textContent = ''; 
 
         let weekEvents = [];
 
@@ -119,34 +134,22 @@ function renderTKB() {
             const evStart = new Date(ev.startDate);
             const evUntil = new Date(ev.untilDate);
             const evMonday = getMonday(evStart);
-            
-            const diffTime = monday.getTime() - evMonday.getTime();
-            const diffWeeks = Math.round(diffTime / (1000 * 60 * 60 * 24 * 7));
+            const diffWeeks = Math.round((monday.getTime() - evMonday.getTime()) / (1000 * 60 * 60 * 24 * 7));
 
             if (diffWeeks >= 0 && monday <= evUntil && (diffWeeks % ev.interval === 0)) {
-                
-                // 1. Nếu đây là sự kiện "NGHỈ" độc lập, CHẶN không cho vẽ ra TKB để tránh trùng lịch 
                 if (ev.isCancelled) return; 
 
                 let currentEv = ev;
-
-                // 2. Nếu đây là môn học bình thường, đi tìm xem hôm đó nó có bị thông báo NGHỈ không
                 if (!ev.isMakeup) {
                     const eventDate = new Date(monday);
                     eventDate.setDate(monday.getDate() + (ev.dayOfWeek === 8 ? 6 : ev.dayOfWeek - 2));
-                    const eventDateStr = `${eventDate.getFullYear()}-${(eventDate.getMonth()+1).toString().padStart(2,'0')}-${eventDate.getDate().toString().padStart(2,'0')}`;
-
+                    const eventDateStr = `${eventDate.getFullYear()}-${pad(eventDate.getMonth()+1)}-${pad(eventDate.getDate())}`;
                     const baseCode = ev.title.split(' - ')[0].trim();
                     
-                    const isCancelledToday = events.some(c => {
-                        if (!c.isCancelled || c.startDate !== eventDateStr) return false;
-                        const cancelledCode = c.title.split(' ')[0].trim(); // Tách "IE108.Q21 (NGHỈ)" thành "IE108.Q21"
-                        return baseCode === cancelledCode || baseCode.startsWith(cancelledCode + '.');
-                    });
+                    const isCancelledToday = events.some(c => c.isCancelled && c.startDate === eventDateStr && (baseCode === c.title.split(' ')[0].trim() || baseCode.startsWith(c.title.split(' ')[0].trim() + '.')));
 
                     if (isCancelledToday) {
-                        // Nếu có nghỉ, Tích hợp trạng thái NGHỈ thẳng vào sự kiện gốc này!
-                        currentEv = Object.assign({}, ev); // Clone ra để không hỏng data gốc
+                        currentEv = Object.assign({}, ev);
                         currentEv.isCancelled = true;
                         currentEv.title = baseCode + " (NGHỈ)";
                     }
@@ -156,43 +159,36 @@ function renderTKB() {
                 if (currentEv.startTiet === 0) startRow = 11; 
                 if (currentEv.startTiet === 11) startRow = 12; 
 
-                weekEvents.push({
-                    ev: currentEv,
-                    col: currentEv.dayOfWeek,
-                    start: startRow,
-                    span: currentEv.spanTiet,
-                    end: startRow + currentEv.spanTiet - 1
-                });
+                weekEvents.push({ ev: currentEv, col: currentEv.dayOfWeek, start: startRow, span: currentEv.spanTiet, end: startRow + currentEv.spanTiet - 1 });
             }
         });
 
         let columns = {2:[], 3:[], 4:[], 5:[], 6:[], 7:[], 8:[]};
         weekEvents.forEach(e => columns[e.col].push(e));
 
-        function getCardHTML(ev, isItem = false) {
+        function createCardNode(ev, isItem = false) {
             let cardClass = 'class-card';
             if (ev.isMakeup) cardClass += ' makeup-card';
-            else if (ev.isCancelled) cardClass += ' cancelled-card'; // Lớp CSS này sẽ tự động gạch ngang chữ
+            else if (ev.isCancelled) cardClass += ' cancelled-card';
             else if (ev.title.includes('.1') || ev.fullDesc.includes('HT1') || ev.fullDesc.includes('TH')) cardClass += ' ht1-card';
             if (isItem) cardClass += ' overlap-item';
 
+            const div = createEl('div', cardClass);
             const parts = ev.title.split(' - ');
-            const courseName = parts[0];
             const room = parts.length > 1 ? parts[1] : (ev.fullDesc.includes('Phòng:') ? ev.fullDesc : "");
 
-            return `
-                <div class="${cardClass}">
-                    <div class="class-title">${courseName}</div>
-                    <div class="class-room">${room}</div>
-                    <div style="margin-top: 4px; font-size: 0.8em;">${ev.teacher}</div>
-                </div>
-            `;
+            div.appendChild(createEl('div', 'class-title', parts[0]));
+            div.appendChild(createEl('div', 'class-room', room));
+            
+            const teacherDiv = createEl('div', '', ev.teacher);
+            teacherDiv.style.marginTop = '4px'; teacherDiv.style.fontSize = '0.8em';
+            div.appendChild(teacherDiv);
+            
+            return div;
         }
 
         for (let col in columns) {
-            let evs = columns[col];
-            evs.sort((a,b) => a.start - b.start);
-            
+            let evs = columns[col].sort((a,b) => a.start - b.start);
             let i = 0;
             while (i < evs.length) {
                 let group = [evs[i]];
@@ -207,20 +203,22 @@ function renderTKB() {
                 }
                 
                 if (group.length === 1) {
-                    let g = group[0];
-                    container.innerHTML += `<div style="grid-column: ${col}; grid-row: ${g.start} / span ${g.span}; z-index: 10;">
-                                    ${getCardHTML(g.ev)}
-                                </div>`;
+                    let wrapper = createEl('div');
+                    wrapper.style.gridColumn = col; wrapper.style.gridRow = `${group[0].start} / span ${group[0].span}`; wrapper.style.zIndex = 10;
+                    wrapper.appendChild(createCardNode(group[0].ev));
+                    container.appendChild(wrapper);
                 } else {
-                    let listHTML = group.map(g => getCardHTML(g.ev, true)).join('');
-                    container.innerHTML += `
-                        <div class="overlap-container" style="grid-column: ${col}; grid-row: ${groupStart} / span ${groupEnd - groupStart + 1}; z-index: 20;">
-                            <div class="overlap-trigger">⚠️ Trùng ${group.length} lịch<br>(Rê chuột vào)</div>
-                            <div class="overlap-list">
-                                ${listHTML}
-                            </div>
-                        </div>
-                    `;
+                    let wrapper = createEl('div', 'overlap-container');
+                    wrapper.style.gridColumn = col; wrapper.style.gridRow = `${groupStart} / span ${groupEnd - groupStart + 1}`; wrapper.style.zIndex = 20;
+                    
+                    let trigger = createEl('div', 'overlap-trigger');
+                    trigger.innerHTML = `⚠️ Trùng ${group.length} lịch<br>(Rê chuột vào)`; // Nội dung tĩnh an toàn
+                    
+                    let list = createEl('div', 'overlap-list');
+                    group.forEach(g => list.appendChild(createCardNode(g.ev, true)));
+                    
+                    wrapper.append(trigger, list);
+                    container.appendChild(wrapper);
                 }
                 i = j;
             }
@@ -232,31 +230,34 @@ function renderGrades() {
     chrome.storage.local.get(['saved_grades'], (res) => {
         const grades = res.saved_grades || [];
         const tbody = document.querySelector('#grades-table tbody');
+        tbody.textContent = ''; 
+
         if (grades.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="9">Đang chờ quét dữ liệu điểm... Hãy mở trang KQHT trên web trường.</td></tr>`;
+            const tr = createEl('tr');
+            const td = createEl('td', '', 'Đang chờ quét dữ liệu điểm... Hãy mở trang KQHT trên web trường.');
+            td.colSpan = 9; tr.appendChild(td); tbody.appendChild(tr);
             return;
         }
 
-        tbody.innerHTML = '';
         let currentKy = "";
-
         grades.forEach(g => {
             if (g.hocKy !== currentKy && g.hocKy !== "Chưa xác định") {
                 currentKy = g.hocKy;
-                tbody.innerHTML += `
-                    <tr style="background-color: #45475a;">
-                        <td colspan="9" style="text-align: left; font-weight: bold; color: #f5c2e7; padding-left: 15px;">
-                            📌 ${currentKy}
-                        </td>
-                    </tr>
-                `;
+                const headerTr = createEl('tr'); headerTr.style.backgroundColor = '#45475a';
+                const headerTd = createEl('td', '', `📌 ${currentKy}`);
+                headerTd.colSpan = 9; headerTd.style.cssText = 'text-align: left; font-weight: bold; color: #f5c2e7; padding-left: 15px;';
+                headerTr.appendChild(headerTd); tbody.appendChild(headerTr);
             }
 
-            tbody.innerHTML += `<tr>
-                <td>${g.maHP}</td><td style="text-align:left; font-weight:bold;">${g.tenHP}</td><td>${g.tc}</td>
-                <td>${g.diemQT}</td><td>${g.diemGK}</td><td>${g.diemTH}</td>
-                <td>${g.diemCK}</td><td style="color:#a6e3a1; font-weight:bold;">${g.diemHP}</td><td>${g.ghiChu}</td>
-            </tr>`;
+            const tr = createEl('tr');
+            const keys = ['maHP', 'tenHP', 'tc', 'diemQT', 'diemGK', 'diemTH', 'diemCK', 'diemHP', 'ghiChu'];
+            keys.forEach(k => {
+                const td = createEl('td', '', g[k]);
+                if (k === 'tenHP') td.style.cssText = 'text-align:left; font-weight:bold;';
+                if (k === 'diemHP') td.style.cssText = 'color:#a6e3a1; font-weight:bold;';
+                tr.appendChild(td);
+            });
+            tbody.appendChild(tr);
         });
     });
 }
@@ -265,17 +266,26 @@ function renderExams() {
     chrome.storage.local.get(['saved_exams'], (res) => {
         const exams = res.saved_exams || [];
         const tbody = document.querySelector('#exams-table tbody');
+        tbody.textContent = ''; 
+
         if (exams.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="8">Hiện tại chưa có lịch thi nào hoặc đang chờ đồng bộ...</td></tr>`;
+            const tr = createEl('tr');
+            const td = createEl('td', '', 'Hiện tại chưa có lịch thi nào hoặc đang chờ đồng bộ...');
+            td.colSpan = 8; tr.appendChild(td); tbody.appendChild(tr);
             return;
         }
-        tbody.innerHTML = '';
+        
         exams.forEach(e => {
-            tbody.innerHTML += `<tr>
-                <td>${e.stt}</td><td style="color:#f5c2e7; font-weight:bold;">${e.maMH}</td><td>${e.maLop}</td>
-                <td>${e.caThi}</td><td>${e.thuThi}</td><td style="color:#a6e3a1;">${e.ngayThi}</td>
-                <td style="color:#f38ba8; font-weight:bold;">${e.phongThi}</td><td>${e.ghiChu}</td>
-            </tr>`;
+            const tr = createEl('tr');
+            const keys = ['stt', 'maMH', 'maLop', 'caThi', 'thuThi', 'ngayThi', 'phongThi', 'ghiChu'];
+            keys.forEach(k => {
+                const td = createEl('td', '', e[k]);
+                if (k === 'maMH') td.style.cssText = 'color:#f5c2e7; font-weight:bold;';
+                if (k === 'ngayThi') td.style.color = '#a6e3a1';
+                if (k === 'phongThi') td.style.cssText = 'color:#f38ba8; font-weight:bold;';
+                tr.appendChild(td);
+            });
+            tbody.appendChild(tr);
         });
     });
 }

@@ -85,7 +85,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
     if (message.action === "notifyUpdates") {
         chrome.notifications.create({
-            type: "basic", iconUrl: "https://student.uit.edu.vn/favicon.ico",
+            type: "basic", iconUrl: chrome.runtime.getURL("Icon128.png"),
             title: message.title, message: message.content, priority: 2
         });
     }
