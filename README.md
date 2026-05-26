@@ -5,10 +5,12 @@ Tiện ích mở rộng "All-in-one" dành cho sinh viên UIT (Đại học Côn
 - **Auto Login:** Tự động điền MSSV, Mật khẩu và giải luôn mã Captcha khi vào [`student.uit.edu.vn`](https://student.uit.edu.vn), [`daa.uit.edu.vn`](https://daa.uit.edu.vn), và [`courses.uit.edu.vn`](https://courses.uit.edu.vn).
 - **Cảnh báo Điểm mới:** Tự động check điểm ngầm 3h/lần. Có điểm mới là thông báo ngay (nhảy Notification góc màn hình).
 - **Cào TKB Thông Minh (ICS + Hybrid):** Đồng bộ lịch học thường, và tự động quét thông báo để bổ sung lịch **HỌC BÙ**, gạch bỏ lịch **NGHỈ HỌC**.
-- **Dashboard TKB Xịn Xò:** Giao diện TKB tuyệt đẹp chia lưới theo tuần trực tiếp trên Extension.
+- **Dashboard TKB Xịn Xò:** Giao diện TKB tuyệt đẹp chia lưới theo tuần trực tiếp trên Extension. Hỗ trợ chế độ Sáng/Tối mượt
 - **Bảng Điểm:** Bảng điểm có trên dashboard
 - **Semi-Auto Survey:** Tự động điền khảo sát môn học 
 - **Lịch thi:** Có thể xem lịch thi trên dashboard của extensions
+- **Hẹn giờ ĐKHP:** Tích hợp đồng hồ đếm ngược Realtime chính xác từng mili-giây giúp tự động mở trang ĐKHP, tự đăng nhập và tự động tick chọn môn học
+- **Xếp Lớp TKB thông minh:** Tiện ích hỗ trợ kéo thả file Excel danh sách môn học của trường để bạn tìm kiếm, lọc theo Khoa, xếp lịch học thử và copy nhanh danh sách mã lớp sang tab ĐKHP.
 
 ##  Hướng dẫn cài đặt
 1. Truy cập trang [Releases](../../releases) và tải về file `.zip` mới nhất.
