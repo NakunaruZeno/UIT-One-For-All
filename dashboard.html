@@ -1,167 +1,1202 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="vi" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <title>UIT Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, sans-serif; background: #1e1e2e; color: #cdd6f4; margin: 0; padding: 20px; }
-        .container { max-width: 1250px; margin: auto; }
-        
-        .tab-nav { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #45475a; padding-bottom: 10px; }
-        .tab-btn { background: #313244; color: #bac2de; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.2s; }
-        .tab-btn:hover { background: #45475a; }
-        .tab-btn.active { background: #89b4fa; color: #11111b; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
+        /* =============================================
+           DESIGN TOKENS — DARK & LIGHT MODE
+        ============================================= */
+        :root[data-theme="dark"] {
+            --bg:         #13131f;
+            --bg-alt:     #1a1a2e;
+            --surface:    #1f1f35;
+            --surface-2:  #2a2a45;
+            --border:     #32324f;
+            --border-h:   #4a4a70;
+            --text:       #e2e4f0;
+            --text-2:     #9a9cbd;
+            --text-3:     #5c5e7a;
+            --blue:       #7b9ef8;
+            --blue-dim:   rgba(123,158,248,.12);
+            --green:      #7ec99a;
+            --green-dim:  rgba(126,201,154,.12);
+            --red:        #f07080;
+            --red-dim:    rgba(240,112,128,.12);
+            --orange:     #f5a97d;
+            --orange-dim: rgba(245,169,125,.12);
+            --purple:     #c19ef5;
+            --yellow:     #e6c87a;
+            --pink:       #e891c5;
+            --shadow:     0 4px 24px rgba(0,0,0,.45);
+            --shadow-sm:  0 2px 10px rgba(0,0,0,.3);
+            --toggle-bg:  #2a2a45;
+            --toggle-icon: "☀️";
+            --card-hover: rgba(123,158,248,.05);
+        }
+        :root[data-theme="light"] {
+            --bg:         #f2f3f8;
+            --bg-alt:     #ffffff;
+            --surface:    #ffffff;
+            --surface-2:  #eef0f8;
+            --border:     #dde0f0;
+            --border-h:   #b8bde0;
+            --text:       #2d2f52;
+            --text-2:     #5a5e8a;
+            --text-3:     #9095b8;
+            --blue:       #3a60e8;
+            --blue-dim:   rgba(58,96,232,.1);
+            --green:      #2a9c58;
+            --green-dim:  rgba(42,156,88,.1);
+            --red:        #d03050;
+            --red-dim:    rgba(208,48,80,.1);
+            --orange:     #d96020;
+            --orange-dim: rgba(217,96,32,.1);
+            --purple:     #7040d8;
+            --yellow:     #c08010;
+            --pink:       #c04090;
+            --shadow:     0 4px 24px rgba(80,90,160,.1);
+            --shadow-sm:  0 2px 10px rgba(80,90,160,.08);
+            --toggle-bg:  #eef0f8;
+            --toggle-icon: "🌙";
+            --card-hover: rgba(58,96,232,.04);
+        }
 
-        .header-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        button.action-btn { background: #89b4fa; color: #11111b; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s;}
-        button.action-btn:hover { opacity: 0.8; }
-        
-        .alert-box { background: #f38ba8; color: #11111b; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: none; }
-        .alert-box a { color: #11111b; font-weight: bold; background: rgba(255,255,255,0.3); padding: 2px 6px; border-radius: 4px; text-decoration: none; margin-left: 10px;}
-        
+        /* =============================================
+           RESET & BASE
+        ============================================= */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Be Vietnam Pro', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            transition: background .25s, color .25s;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        /* =============================================
+           LAYOUT
+        ============================================= */
+        .app-wrapper { max-width: 1280px; margin: 0 auto; padding: 24px 20px 40px; }
+
+        /* =============================================
+           TOP BAR
+        ============================================= */
+        .top-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 28px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+        .app-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .app-logo img {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+        }
+        .app-logo-text {
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: -.4px;
+            color: var(--text);
+        }
+        .app-logo-text span { color: var(--blue); }
+        .top-controls { display: flex; align-items: center; gap: 10px; }
+
+        /* Theme Toggle */
+        .theme-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 14px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            background: var(--toggle-bg);
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-2);
+            transition: all .2s;
+            font-family: inherit;
+        }
+        .theme-toggle:hover { border-color: var(--border-h); color: var(--text); }
+        .theme-toggle .icon { font-size: 16px; line-height: 1; }
+
+        /* =============================================
+           TAB NAV
+        ============================================= */
+        .tab-nav {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 24px;
+            background: var(--surface-2);
+            border-radius: 12px;
+            padding: 5px;
+            width: fit-content;
+            flex-wrap: wrap;
+        }
+        .tab-btn {
+            background: transparent;
+            color: var(--text-2);
+            border: none;
+            padding: 9px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13.5px;
+            font-family: inherit;
+            transition: all .18s;
+            white-space: nowrap;
+        }
+        .tab-btn:hover { color: var(--text); background: var(--card-hover); }
+        .tab-btn.active {
+            background: var(--surface);
+            color: var(--blue);
+            box-shadow: var(--shadow-sm);
+        }
+        .tab-content { display: none; animation: fadeIn .2s ease; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* =============================================
+           SECTION HEADER
+        ============================================= */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+            gap: 16px;
+        }
+        .section-title {
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--text);
+            letter-spacing: -.3px;
+        }
+        .section-title span { color: var(--blue); }
+
+        /* =============================================
+           BUTTONS
+        ============================================= */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: none;
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all .18s;
+            white-space: nowrap;
+        }
+        .btn:hover { opacity: .85; transform: translateY(-1px); }
+        .btn:active { transform: translateY(0); }
+        .btn-primary { background: var(--blue); color: var(--bg); }
+        .btn-success { background: var(--green); color: var(--bg); }
+        .btn-danger  { background: var(--red);  color: #fff; }
+        .btn-ghost {
+            background: var(--surface-2);
+            color: var(--text-2);
+            border: 1px solid var(--border);
+        }
+        .btn-ghost:hover { color: var(--text); border-color: var(--border-h); }
+
+        /* action-btn alias for backward-compat JS */
+        button.action-btn { background: var(--blue); color: var(--bg); border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; font-family: inherit; font-size: 13px; transition: all .18s; }
+        button.action-btn:hover { opacity: .85; }
+
+        /* =============================================
+           ALERT BOX
+        ============================================= */
+        .alert-box {
+            background: var(--red-dim);
+            border: 1px solid var(--red);
+            color: var(--text);
+            padding: 16px 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        .alert-box h3 { color: var(--red); margin-bottom: 10px; font-size: 14px; }
+        .alert-box a {
+            color: var(--blue);
+            font-weight: 600;
+            text-decoration: none;
+            background: var(--blue-dim);
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin-left: 8px;
+        }
+
+        /* =============================================
+           TKB GRID
+        ============================================= */
+        .week-nav {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            justify-content: center;
+            margin-bottom: 18px;
+        }
+        .week-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-2);
+            min-width: 320px;
+            text-align: center;
+        }
+
+        .tkb-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid var(--border); }
         .tkb-grid {
             display: grid;
-            grid-template-columns: 120px repeat(6, 1fr);
-            grid-template-rows: 40px repeat(11, minmax(60px, auto));
-            gap: 2px; background: #45475a; border: 2px solid #45475a;
+            grid-template-columns: 100px repeat(6, 1fr);
+            grid-template-rows: 42px repeat(11, minmax(62px, auto));
+            gap: 1px;
+            background: var(--border);
+            min-width: 640px;
         }
-        .tkb-cell { background: #181825; padding: 5px; text-align: center; border-radius: 2px; }
-        .header-cell { background: #313244; font-weight: bold; display: flex; align-items: center; justify-content: center; }
-        .time-col { background: #313244; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.85em; text-align: center;}
-        
+        .tkb-cell  { background: var(--bg); }
+        .header-cell {
+            background: var(--surface-2);
+            font-weight: 700;
+            font-size: 13px;
+            color: var(--text-2);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .time-col {
+            background: var(--surface-2);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            font-size: 11.5px;
+            color: var(--text-3);
+            text-align: center;
+            padding: 4px;
+            line-height: 1.4;
+        }
+        .time-col strong { color: var(--text-2); font-size: 12px; font-weight: 700; display: block; }
+
+        /* Class cards */
         .class-card {
-            background: #f5f5f5; color: #111; padding: 8px; font-size: 0.85em;
-            border-left: 4px solid #89b4fa; border-radius: 4px; height: 100%; box-sizing: border-box;
-            display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;
+            background: var(--surface);
+            padding: 8px 10px;
+            font-size: 12px;
+            border-left: 3px solid var(--blue);
+            border-radius: 3px;
+            height: 100%;
+            box-sizing: border-box;
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            text-align: center;
+            gap: 2px;
         }
-        .class-title { font-weight: bold; color: #1e66f5; margin-bottom: 4px; }
-        .class-room { color: #d20f39; font-weight: bold; }
-        
-        .ht1-card { border-left-color: #40a02b !important; } 
-        .makeup-card { border-left-color: #fab387 !important; background: #3e3135 !important; color: #fab387;}
-        .cancelled-card { border-left-color: #f38ba8 !important; background: #2d1e24 !important; text-decoration: line-through; opacity: 0.7; }
+        .class-title { font-weight: 700; color: var(--blue); font-size: 11.5px; }
+        .class-room  { color: var(--red); font-weight: 700; font-size: 11px; }
+        .class-teacher { color: var(--text-3); font-size: 10.5px; }
 
-        .data-table { width: 100%; border-collapse: collapse; margin-top: 10px; background: #181825; border-radius: 8px; overflow: hidden; }
-        .data-table th, .data-table td { padding: 12px; border: 1px solid #313244; text-align: center; }
-        .data-table th { background: #313244; color: #cba6f7; font-weight: bold; }
-        .data-table tr:nth-child(even) { background: #1e1e2e; }
+        .ht1-card      { border-left-color: var(--green) !important; }
+        .ht1-card .class-title { color: var(--green); }
+        .makeup-card { 
+            border-left-color: var(--orange) !important; 
+            background-color: var(--surface) !important;
+            background-image: linear-gradient(var(--orange-dim), var(--orange-dim)) !important; 
+        }
+        .makeup-card .class-title { color: var(--orange); }
+        .cancelled-card { 
+            border-left-color: var(--red) !important; 
+            background-color: var(--surface) !important;
+            background-image: linear-gradient(var(--red-dim), var(--red-dim)) !important; 
+            opacity: .65; 
+            text-decoration: line-through; 
+        }
+        .cancelled-card .class-title { color: var(--red); }
 
-        /* DROPDOWN TRÙNG LỊCH */
+
+        /* Overlap */
         .overlap-container { position: relative; width: 100%; height: 100%; }
         .overlap-trigger {
-            background: #fab387; color: #111; font-weight: bold; border-radius: 4px;
-            display: flex; align-items: center; justify-content: center; height: 100%; cursor: pointer;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2); border-left: 4px solid #d20f39; font-size: 0.9em;
+            background-color: var(--surface);
+            background-image: linear-gradient(var(--orange-dim), var(--orange-dim));
+            border: 1px solid var(--orange);
+            color: var(--orange);
+            font-weight: 700;
+            border-radius: 4px;
+            display: flex; align-items: center; justify-content: center;
+            height: 100%; cursor: pointer;
+            font-size: 11.5px;
+            text-align: center;
+            padding: 4px;
+            line-height: 1.4;
         }
         .overlap-list {
-            display: none; position: absolute; top: 100%; left: 0; width: 250px; z-index: 999;
-            background: #1e1e2e; border: 1px solid #45475a; border-radius: 6px; box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-            padding: 10px; flex-direction: column; gap: 5px;
+            display: none; position: absolute; top: 100%; left: 0;
+            width: 240px; z-index: 999;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            padding: 10px;
+            flex-direction: column; gap: 6px;
+        }
+        .overlap-text-wrap {
+            line-height: 1.3;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+        }
+        .overlap-hint {
+            font-size: 10px;
+            font-weight: 500;
+            color: var(--text-3); /* Tự động đổi màu theo Light/Dark mode của UIT */
+            margin-top: 2px;
+            display: block;
         }
         .overlap-container:hover { z-index: 100 !important; }
         .overlap-container:hover .overlap-list { display: flex; }
-        .overlap-item { position: static !important; height: auto !important; margin-bottom: 5px; }
-        
-        /* FORM CHỌN LỊCH THI */
-        .exam-filter { display: flex; gap: 15px; background: #313244; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
-        .exam-filter label { font-weight: bold; margin-right: 5px; color: #bac2de;}
-        .exam-filter select { padding: 6px; border-radius: 4px; border: none; outline: none; background: #181825; color: #cdd6f4; font-weight: bold;}
+        .overlap-item { position: static !important; height: auto !important; }
+
+        /* =============================================
+           DATA TABLE (shared)
+        ============================================= */
+        .table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid var(--border); }
+        .data-table {
+            width: 100%; border-collapse: collapse;
+            background: var(--surface);
+            font-size: 13px;
+        }
+        .data-table th {
+            background: var(--surface-2);
+            color: var(--text-2);
+            font-weight: 700;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            padding: 11px 14px;
+            border-bottom: 1px solid var(--border);
+            text-align: center;
+        }
+        .data-table td {
+            padding: 11px 14px;
+            border-bottom: 1px solid var(--border);
+            text-align: center;
+            color: var(--text);
+        }
+        .data-table tbody tr:last-child td { border-bottom: none; }
+        .data-table tbody tr:hover { background: var(--card-hover); }
+
+        /* =============================================
+           EXAM FILTER
+        ============================================= */
+        .filter-bar {
+            display: flex;
+            gap: 16px;
+            align-items: flex-end;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 16px 20px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+        .filter-group { display: flex; flex-direction: column; gap: 5px; }
+        .filter-group label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            color: var(--text-3);
+        }
+        .filter-group select {
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--surface-2);
+            color: var(--text);
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 600;
+            outline: none;
+            cursor: pointer;
+            transition: border-color .18s;
+        }
+        .filter-group select:focus { border-color: var(--blue); }
+        .filter-group select:hover { border-color: var(--border-h); }
+
+        /* =============================================
+           DKHP SCHEDULER TAB
+        ============================================= */
+        .dkhp-layout {
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 20px;
+            align-items: start;
+        }
+        @media (max-width: 900px) { .dkhp-layout { grid-template-columns: 1fr; } }
+
+        .dkhp-form-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 24px;
+        }
+        .dkhp-form-card h3 {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .form-group { margin-bottom: 18px; }
+        .form-group label {
+            display: block;
+            font-size: 11.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            color: var(--text-3);
+            margin-bottom: 7px;
+        }
+        .form-group input[type="datetime-local"],
+        .form-group textarea {
+            width: 100%;
+            padding: 10px 14px;
+            border-radius: 9px;
+            border: 1px solid var(--border);
+            background: var(--surface-2);
+            color: var(--text);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            outline: none;
+            transition: border-color .18s;
+            box-sizing: border-box;
+        }
+        .form-group input[type="datetime-local"]:focus,
+        .form-group textarea:focus { border-color: var(--blue); }
+        .form-group textarea { resize: vertical; min-height: 200px; line-height: 1.7; }
+
+        .btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
+
+        /* Countdown Card */
+        .dkhp-status-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 24px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0;
+            text-align: center;
+            position: sticky;
+            top: 20px;
+            transition: border-color .3s;
+        }
+        .dkhp-status-card.state-active  { border-color: var(--blue); }
+        .dkhp-status-card.state-urgent  { border-color: var(--orange); }
+        .dkhp-status-card.state-done    { border-color: var(--green); }
+        .dkhp-status-card.state-off     { border-color: var(--border); }
+
+        .cd-label {
+            font-size: 10.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-3);
+            margin-bottom: 16px;
+        }
+        .cd-clock {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 44px;
+            font-weight: 600;
+            color: var(--blue);
+            letter-spacing: 2px;
+            line-height: 1;
+            margin-bottom: 12px;
+            font-variant-numeric: tabular-nums;
+            transition: color .3s;
+        }
+        .cd-clock.urgent { color: var(--orange); }
+        .cd-clock.done   { color: var(--green); font-size: 28px; }
+        .cd-clock.off    { color: var(--text-3); }
+
+        .cd-target {
+            font-size: 12px;
+            color: var(--text-3);
+            margin-bottom: 16px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .cd-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            margin-bottom: 18px;
+        }
+        .cd-badge.active  { background: var(--blue-dim);  color: var(--blue); }
+        .cd-badge.urgent  { background: var(--orange-dim); color: var(--orange); }
+        .cd-badge.done    { background: var(--green-dim); color: var(--green); }
+        .cd-badge.off     { background: var(--surface-2); color: var(--text-3); }
+        .cd-badge::before { content: "●"; font-size: 8px; }
+
+        .cd-courses {
+            width: 100%;
+            background: var(--surface-2);
+            border-radius: 9px;
+            padding: 12px 14px;
+            text-align: left;
+            max-height: 130px;
+            overflow-y: auto;
+        }
+        .cd-courses-title {
+            font-size: 10.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            color: var(--text-3);
+            margin-bottom: 8px;
+        }
+        .course-pill {
+            display: inline-block;
+            background: var(--blue-dim);
+            color: var(--blue);
+            padding: 2px 8px;
+            border-radius: 5px;
+            font-size: 11.5px;
+            font-family: 'JetBrains Mono', monospace;
+            margin: 2px;
+            font-weight: 600;
+        }
+
+        /* Hint box */
+        .hint-box {
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--yellow);
+            border-radius: 10px;
+            padding: 14px 16px;
+            font-size: 12.5px;
+            color: var(--text-2);
+            line-height: 1.75;
+            margin-top: 20px;
+        }
+        .hint-box b { color: var(--yellow); }
+        .hint-box a { color: var(--blue); text-decoration: none; font-weight: 600; }
+        .hint-box ul { padding-left: 18px; margin-top: 6px; }
+        .hint-box li { margin-bottom: 3px; }
+
+        /* Status message inline */
+        .inline-status {
+            font-size: 13px;
+            font-weight: 600;
+            padding: 8px 0;
+            min-height: 20px;
+            transition: color .2s;
+        }
+
+        /* =============================================
+           GRADE TABLE SEMESTER HEADER
+        ============================================= */
+        .semester-row td {
+            background: var(--surface-2) !important;
+            color: var(--purple) !important;
+            font-weight: 700 !important;
+            text-align: left !important;
+            padding-left: 18px !important;
+            font-size: 13px !important;
+        }
+
+        /* =============================================
+           FOOTER
+        ============================================= */
+        .footer {
+            text-align: center;
+            margin-top: 36px;
+            font-size: 11px;
+            color: var(--text-3);
+        }
+        .footer a { color: var(--text-3); text-decoration: none; }
+        .footer a:hover { color: var(--text-2); }
+
+        /* =============================================
+           SCROLLBAR
+        ============================================= */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border-h); border-radius: 3px; }
+
+        /* =============================================
+           XẾP LỚP TAB
+        ============================================= */
+        .xeplop-layout {
+            display: grid;
+            grid-template-columns: 1fr 420px;
+            gap: 20px;
+            align-items: start;
+        }
+        @media (max-width: 1100px) { .xeplop-layout { grid-template-columns: 1fr; } }
+
+        .xlsx-upload-zone {
+            border: 2px dashed var(--border-h);
+            border-radius: 14px;
+            padding: 28px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all .25s;
+            background: var(--surface);
+            margin-bottom: 18px;
+            position: relative;
+        }
+        .xlsx-upload-zone:hover, .xlsx-upload-zone.dragover {
+            border-color: var(--blue);
+            background: var(--blue-dim);
+        }
+        .xlsx-upload-zone .upload-icon { font-size: 32px; margin-bottom: 8px; }
+        .xlsx-upload-zone .upload-text { color: var(--text-2); font-size: 13px; }
+        .xlsx-upload-zone .upload-text b { color: var(--blue); }
+        .xlsx-upload-zone .upload-status {
+            margin-top: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--green);
+        }
+        .xlsx-upload-zone input[type="file"] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .search-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+        }
+        .search-bar input[type="text"] {
+            flex: 1;
+            min-width: 200px;
+            padding: 9px 14px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--surface-2);
+            color: var(--text);
+            font-family: inherit;
+            font-size: 13px;
+            outline: none;
+            transition: border-color .18s;
+        }
+        .search-bar input[type="text"]:focus { border-color: var(--blue); }
+        .search-bar select {
+            padding: 9px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--surface-2);
+            color: var(--text);
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 600;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .course-table-wrap {
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+            max-height: 420px;
+            overflow-y: auto;
+        }
+        .course-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--surface);
+            font-size: 12.5px;
+        }
+        .course-table th {
+            background: var(--surface-2);
+            color: var(--text-2);
+            font-weight: 700;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: .4px;
+            padding: 9px 10px;
+            border-bottom: 1px solid var(--border);
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 2;
+        }
+        .course-table td {
+            padding: 8px 10px;
+            border-bottom: 1px solid var(--border);
+            text-align: center;
+            color: var(--text);
+        }
+        .course-table tbody tr:hover { background: var(--card-hover); }
+        .course-table tbody tr.selected-row {
+            background: var(--blue-dim);
+        }
+        .course-table tbody tr.conflict-row {
+            background: var(--red-dim);
+        }
+        .course-table tbody tr.locked-row {
+            background: var(--surface-2);
+            cursor: not-allowed;
+        }
+        .course-table tbody tr.locked-row:hover {
+            background: var(--surface-2);
+        }
+        .course-table td.col-name {
+            text-align: left;
+            font-weight: 600;
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .course-table td.col-code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11.5px;
+            color: var(--purple);
+            font-weight: 600;
+        }
+
+        /* Summary bar */
+        .xeplop-summary {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            margin-top: 14px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            flex-wrap: wrap;
+        }
+        .xeplop-summary .summary-text {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-2);
+        }
+        .xeplop-summary .summary-count {
+            color: var(--blue);
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Conflict warnings */
+        .conflict-list {
+            margin-top: 14px;
+        }
+        .conflict-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            background: var(--red-dim);
+            border: 1px solid var(--red);
+            border-radius: 8px;
+            margin-bottom: 6px;
+            font-size: 12px;
+            color: var(--text);
+        }
+        .conflict-badge .conflict-icon { color: var(--red); font-weight: 700; }
+
+        /* Preview sidebar */
+        .preview-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 18px;
+            position: sticky;
+            top: 20px;
+        }
+        .preview-card h3 {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .preview-grid-wrap {
+            overflow-x: auto;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+        .preview-grid {
+            display: grid;
+            grid-template-columns: 50px repeat(6, 1fr);
+            grid-template-rows: 32px repeat(11, minmax(38px, auto));
+            gap: 1px;
+            background: var(--border);
+            min-width: 380px;
+            font-size: 10.5px;
+        }
+        .preview-grid .header-cell {
+            background: var(--surface-2);
+            font-weight: 700;
+            font-size: 11px;
+            color: var(--text-2);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .preview-grid .time-col {
+            background: var(--surface-2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            color: var(--text-3);
+            font-weight: 700;
+        }
+        .preview-grid .preview-cell {
+            background: var(--bg);
+        }
+        .preview-grid .preview-class {
+            padding: 3px 4px;
+            font-size: 9.5px;
+            border-left: 2px solid var(--blue);
+            background: var(--surface);
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            gap: 1px;
+        }
+        .preview-grid .preview-class .p-code {
+            font-weight: 700;
+            color: var(--blue);
+            font-size: 9px;
+        }
+        .preview-grid .preview-class .p-room {
+            color: var(--red);
+            font-weight: 600;
+            font-size: 8.5px;
+        }
+        .preview-grid .preview-class.p-conflict {
+            border-left-color: var(--red);
+            background: var(--red-dim);
+        }
+        .preview-grid .preview-class.p-conflict .p-code {
+            color: var(--red);
+        }
+
+        /* Selected class pills in preview */
+        .selected-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-top: 12px;
+        }
+        .sel-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: var(--blue-dim);
+            color: var(--blue);
+            padding: 3px 8px;
+            border-radius: 5px;
+            font-size: 11px;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+        }
+        .sel-pill .pill-remove {
+            cursor: pointer;
+            color: var(--text-3);
+            font-size: 13px;
+            line-height: 1;
+        }
+        .sel-pill .pill-remove:hover { color: var(--red); }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="tab-nav">
-            <button class="tab-btn active" data-tab="tab-tkb">Thời Khóa Biểu</button>
-            <button class="tab-btn" data-tab="tab-diem">Kết quả học tập</button>
-            <button class="tab-btn" data-tab="tab-thi">Lịch Thi</button>
+<div class="app-wrapper">
+
+    <!-- TOP BAR -->
+    <div class="top-bar">
+        <div class="app-logo">
+            <img src="icon/Icon128.png" alt="UIT">
+            <div class="app-logo-text">UIT <span>One For All</span></div>
+        </div>
+        <div class="top-controls">
+            <button class="theme-toggle" id="theme-toggle" title="Chuyển giao diện">
+                <span class="icon" id="theme-icon">☀️</span>
+                <span id="theme-label">Sáng</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- TAB NAV -->
+    <div class="tab-nav">
+        <button class="tab-btn active" data-tab="tab-tkb">📅 Thời Khóa Biểu</button>
+        <button class="tab-btn" data-tab="tab-diem">📊 Kết Quả Học Tập</button>
+        <button class="tab-btn" data-tab="tab-thi">📝 Lịch Thi</button>
+        <button class="tab-btn" data-tab="tab-xeplop">🗓️ Xếp Lớp</button>
+        <button class="tab-btn" data-tab="tab-dkhp">⏰ Hẹn Giờ ĐKHP</button>
+    </div>
+
+    <!-- ── TAB TKB ── -->
+    <div id="tab-tkb" class="tab-content active">
+        <div id="alert-container" class="alert-box">
+            <h3>⚠️ CẢNH BÁO TỪ PHÒNG ĐÀO TẠO</h3>
+            <ul id="alert-list" style="padding-left: 18px;"></ul>
+            <button class="btn btn-danger" id="btn-clear-alerts" style="margin-top:12px; font-size:12px;">
+                ✓ Đã hiểu & Xóa cảnh báo
+            </button>
         </div>
 
-        <div id="tab-tkb" class="tab-content active">
-            <div id="alert-container" class="alert-box">
-                <h3 style="margin: 0 0 10px 0;">⚠️ CẢNH BÁO TỪ PHÒNG ĐÀO TẠO</h3>
-                <ul id="alert-list" style="margin: 0; padding-left: 20px;"></ul>
-                <button class="action-btn" id="btn-clear-alerts" style="margin-top: 10px; background: #111; color:#fff;">Đã hiểu & Xóa cảnh báo</button>
-            </div>
+        <div class="week-nav">
+            <button class="btn btn-ghost" id="btn-prev">← Tuần Trước</button>
+            <div class="week-label" id="week-display">Đang tải...</div>
+            <button class="btn btn-ghost" id="btn-next">Tuần Sau →</button>
+        </div>
 
-            <div class="header-controls">
-                <button class="action-btn" id="btn-prev">⬅ Tuần Trước</button>
-                <h2 id="week-display" style="margin:0;">Tuần học: ...</h2>
-                <button class="action-btn" id="btn-next">Tuần Sau ➡</button>
-            </div>
-
+        <div class="tkb-wrap">
             <div class="tkb-grid" id="tkb-grid">
-                <div class="header-cell">Thứ / Tiết</div>
-                <div class="header-cell">Thứ 2</div><div class="header-cell">Thứ 3</div>
-                <div class="header-cell">Thứ 4</div><div class="header-cell">Thứ 5</div>
-                <div class="header-cell">Thứ 6</div><div class="header-cell">Thứ 7</div>
-                <div id="dynamic-classes" style="display: contents;"></div>
+                <div class="header-cell" style="background:var(--surface-2);">Tiết / Thứ</div>
+                <div class="header-cell">Thứ 2</div>
+                <div class="header-cell">Thứ 3</div>
+                <div class="header-cell">Thứ 4</div>
+                <div class="header-cell">Thứ 5</div>
+                <div class="header-cell">Thứ 6</div>
+                <div class="header-cell">Thứ 7</div>
+                <div id="dynamic-classes" style="display:contents;"></div>
             </div>
         </div>
+    </div>
 
-        <div id="tab-diem" class="tab-content">
-            <h2 style="color: #89b4fa;">Kết quả học tập mới nhất</h2>
+    <!-- ── TAB ĐIỂM ── -->
+    <div id="tab-diem" class="tab-content">
+        <div class="section-header">
+            <div class="section-title">Kết quả học tập <span>mới nhất</span></div>
+        </div>
+        <div class="table-wrap">
             <table class="data-table" id="grades-table">
                 <thead>
                     <tr>
-                        <th>Mã HP</th><th>Tên học phần</th><th>Tín chỉ</th>
-                        <th>Điểm QT</th><th>Điểm GK</th><th>Điểm TH</th>
-                        <th>Điểm CK</th><th>Điểm HP</th><th>Ghi chú</th>
+                        <th>Mã HP</th><th>Tên học phần</th><th>TC</th>
+                        <th>QT</th><th>GK</th><th>TH</th>
+                        <th>CK</th><th>Điểm HP</th><th>Ghi chú</th>
                     </tr>
                 </thead>
                 <tbody></tbody>
             </table>
         </div>
+    </div>
 
-        <div id="tab-thi" class="tab-content">
-            <div class="exam-filter">
-                <div>
-                    <label>Kỳ thi:</label>
-                    <select id="exam-type">
-                        <option value="1">Giữa kỳ (GK)</option>
-                        <option value="2" selected>Cuối kỳ (CK)</option>
-                    </select>
-                </div>
-                <div>
-                    <label>Học kỳ:</label>
-                    <select id="exam-term">
-                        <option value="1">1</option>
-                        <option value="2" selected>2</option>
-                        <option value="3">Hè</option>
-                    </select>
-                </div>
-                <div>
-                    <label>Năm học:</label>
-                    <select id="exam-year">
-                        <option value="2024">2024-2025</option>
-                        <option value="2025" selected>2025-2026</option>
-                        <option value="2026">2026-2027</option>
-                        <option value="2027">2027-2028</option>
-                    </select>
-                </div>
-                <div style="margin-left: auto;">
-                    <button id="btn-fetch-exams" class="action-btn">Cập nhật Lịch Thi</button>
-                </div>
+    <!-- ── TAB LỊCH THI ── -->
+    <div id="tab-thi" class="tab-content">
+        <div class="filter-bar">
+            <div class="filter-group">
+                <label>Kỳ thi</label>
+                <select id="exam-type">
+                    <option value="1">Giữa kỳ (GK)</option>
+                    <option value="2" selected>Cuối kỳ (CK)</option>
+                </select>
             </div>
-
+            <div class="filter-group">
+                <label>Học kỳ</label>
+                <select id="exam-term">
+                    <option value="1">Học kỳ 1</option>
+                    <option value="2" selected>Học kỳ 2</option>
+                    <option value="3">Học kỳ Hè</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Năm học</label>
+                <select id="exam-year">
+                    <option value="2024">2024 – 2025</option>
+                    <option value="2025" selected>2025 – 2026</option>
+                    <option value="2026">2026 – 2027</option>
+                    <option value="2027">2027 – 2028</option>
+                </select>
+            </div>
+            <div class="filter-group" style="margin-left:auto; justify-content:flex-end;">
+                <label>&nbsp;</label>
+                <button id="btn-fetch-exams" class="btn btn-primary">↻ Cập nhật Lịch Thi</button>
+            </div>
+        </div>
+        <div class="table-wrap">
             <table class="data-table" id="exams-table">
                 <thead>
                     <tr>
-                        <th>STT</th><th>Mã MH</th><th>Mã lớp</th>
-                        <th>Ca/Tiết thi</th><th>Thứ thi</th><th>Ngày thi</th>
-                        <th>Phòng thi</th><th>Ghi chú/Hình thức</th>
+                        <th>#</th><th>Mã MH</th><th>Mã lớp</th>
+                        <th>Ca / Tiết thi</th><th>Thứ</th><th>Ngày thi</th>
+                        <th>Phòng thi</th><th>Ghi chú</th>
                     </tr>
                 </thead>
                 <tbody></tbody>
             </table>
         </div>
     </div>
-    
-<div style="text-align: center; margin-top: 30px; font-size: 12px; color: #6c7086;">
-        <a href="https://www.flaticon.com/free-icons/lotus" title="lotus icons" style="color: #6c7086; text-decoration: none;">Lotus icons created by Saifali496 - Flaticon</a>
+
+    <!-- ── TAB ĐKHP ── -->
+    <div id="tab-dkhp" class="tab-content">
+        <div class="dkhp-layout">
+
+            <!-- Form bên trái -->
+            <div class="dkhp-form-card">
+                <h3>⏰ Cấu hình Hẹn Giờ ĐKHP</h3>
+
+                <div class="form-group">
+                    <label>Thời gian chạy đăng ký</label>
+                    <input type="datetime-local" id="dkhp-time">
+                </div>
+
+                <div class="form-group">
+                    <label>Danh sách môn đăng ký — mỗi dòng một mã lớp</label>
+                    <textarea id="dkhp-courses" placeholder="IE106.Q22.CNVN.1&#10;IT007.Q210&#10;IT007.Q210.1&#10;CU001.Q22.CNVN&#10;..."></textarea>
+                </div>
+
+                <div class="btn-row" style="margin-bottom:12px;">
+                    <button id="btn-save-dkhp" class="btn btn-success">✓ Lưu & Bật hẹn giờ</button>
+                    <button id="btn-cancel-dkhp" class="btn btn-danger">✕ Tắt hẹn giờ</button>
+                </div>
+
+                <div class="inline-status" id="dkhp-status-msg"></div>
+
+                <div class="hint-box">
+                    <b>💡 Hướng dẫn</b>
+                    <ul>
+                        <li>Nhập đúng ngày &amp; giờ mở đăng ký của trường.</li>
+                        <li>Dán danh sách <b style="color:var(--text-2)">mã lớp</b> vào ô trên, mỗi dòng một mã.</li>
+                        <li>Bấm <b style="color:var(--green)">Lưu &amp; Bật</b> — khi đến giờ, extension tự mở tab <a href="https://dkhp.uit.edu.vn" target="_blank">dkhp.uit.edu.vn</a>, đăng nhập và tick chọn các lớp.</li>
+                        <li><b style="color:var(--orange)">Giữ máy tính bật &amp; Chrome đang chạy</b> đến giờ hẹn.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Countdown bên phải -->
+            <div class="dkhp-status-card state-off" id="dkhp-status-card">
+                <div class="cd-label">Thời gian còn lại</div>
+                <div class="cd-clock off" id="cd-clock">--:--:--</div>
+                <div class="cd-target" id="cd-target">Chưa đặt lịch</div>
+                <span class="cd-badge off" id="cd-badge">Chưa kích hoạt</span>
+                <div class="cd-courses" id="cd-courses" style="display:none;">
+                    <div class="cd-courses-title">Môn sẽ đăng ký</div>
+                    <div id="cd-pills"></div>
+                </div>
+            </div>
+
+        </div>
     </div>
 
-    <script src="dashboard.js"></script>
+    <!-- ── TAB XẾP LỚP ── -->
+    <div id="tab-xeplop" class="tab-content">
+        <div class="section-header">
+            <div class="section-title">🗓️ Xếp Lớp — <span>Soạn Thời Khóa Biểu</span></div>
+        </div>
+
+        <!-- Upload XLSX -->
+        <div class="xlsx-upload-zone" id="xlsx-upload-zone">
+            <input type="file" id="xlsx-file-input" accept=".xlsx,.xls">
+            <div class="upload-icon">📁</div>
+            <div class="upload-text">Kéo thả hoặc <b>chọn file XLSX</b> danh sách lớp từ trường</div>
+            <div class="upload-status" id="xlsx-upload-status"></div>
+        </div>
+
+        <div class="xeplop-layout">
+            <!-- Cột trái: Bảng lớp -->
+            <div>
+                <div class="search-bar">
+                    <input type="text" id="xeplop-search" placeholder="🔍 Tìm theo mã lớp, tên môn, giảng viên...">
+                    <select id="xeplop-khoa-filter">
+                        <option value="">Tất cả Khoa</option>
+                    </select>
+                </div>
+
+                <div class="course-table-wrap">
+                    <table class="course-table" id="xeplop-table">
+                        <thead>
+                            <tr>
+                                <th style="width:32px;">☐</th>
+                                <th>Mã lớp</th>
+                                <th>Tên môn</th>
+                                <th>Giảng viên</th>
+                                <th>Thứ</th>
+                                <th>Tiết</th>
+                                <th>Phòng</th>
+                                <th>Sĩ số</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+
+                <!-- Summary + Actions -->
+                <div class="xeplop-summary">
+                    <span class="summary-text">Đã chọn: <span class="summary-count" id="xeplop-count">0</span> lớp</span>
+                    <button class="btn btn-success" id="btn-copy-dkhp">📋 Copy mã lớp → ĐKHP</button>
+                    <button class="btn btn-danger" id="btn-clear-xeplop">🗑️ Xóa tất cả</button>
+                </div>
+
+                <!-- Conflict warnings -->
+                <div class="conflict-list" id="conflict-list"></div>
+            </div>
+
+            <!-- Cột phải: Preview TKB -->
+            <div class="preview-card">
+                <h3>📅 Preview Thời Khóa Biểu</h3>
+                <div class="preview-grid-wrap">
+                    <div class="preview-grid" id="preview-grid">
+                        <div class="header-cell">Tiết</div>
+                        <div class="header-cell">T2</div>
+                        <div class="header-cell">T3</div>
+                        <div class="header-cell">T4</div>
+                        <div class="header-cell">T5</div>
+                        <div class="header-cell">T6</div>
+                        <div class="header-cell">T7</div>
+                    </div>
+                </div>
+                <div class="selected-pills" id="selected-pills"></div>
+            </div>
+        </div>
+
+        <div class="hint-box" style="margin-top: 20px;">
+            <b>💡 Hướng dẫn Xếp Lớp</b>
+            <ul>
+                <li>Tải file <b style="color:var(--text-2)">XLSX danh sách lớp</b> từ phòng đào tạo hoặc website trường.</li>
+                <li>Upload file → tìm kiếm/lọc lớp → <b style="color:var(--blue)">tick chọn</b> các lớp muốn đăng ký.</li>
+                <li>Xem <b style="color:var(--green)">Preview TKB</b> bên phải để kiểm tra trùng lịch.</li>
+                <li>Nhấn <b style="color:var(--green)">Copy mã lớp → ĐKHP</b> để chuyển mã lớp sang tab Hẹn Giờ ĐKHP.</li>
+            </ul>
+        </div>
+    </div>
+
+</div>
+
+<div class="footer">
+    <a href="https://www.flaticon.com/free-icons/lotus" title="lotus icons" target="_blank">Lotus icons created by Saifali496 – Flaticon</a>
+</div>
+
+<script src="xlsx.full.min.js"></script>
+<script src="dashboard.js"></script>
 </body>
 </html>

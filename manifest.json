@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "UIT One For All",
-  "version": "1.3.1",
-  "description": "Auto Login, Cào Điểm, Lịch Thi, TKB ICS, Cảnh báo Lịch học & Auto Survey",
+  "version": "1.4.0",
+  "description": "Auto Login, Cào Điểm, Lịch Thi, TKB ICS, Cảnh báo Lịch học, Auto Survey, Hẹn giờ ĐKHP & Xếp Lớp TKB",
   "icons": {
     "16": "icon/Icon16.png",
     "24": "icon/Icon24.png",
@@ -16,7 +16,6 @@
     "default_title": "Cài đặt UIT Extension",
     "default_icon": "icon/Icon64.png"
   },
-
   "permissions": [
     "storage",
     "alarms",
@@ -29,7 +28,8 @@
     "*://courses.uit.edu.vn/*",
     "*://daa.uit.edu.vn/*",
     "*://survey.uit.edu.vn/*",
-    "*://oep.uit.edu.vn/*"
+    "*://oep.uit.edu.vn/*",
+    "*://dkhp.uit.edu.vn/*"
   ],
   "background": {
     "service_worker": "background.js"
@@ -41,9 +41,12 @@
         "*://courses.uit.edu.vn/*",
         "*://daa.uit.edu.vn/*",
         "*://survey.uit.edu.vn/*",
-        "*://oep.uit.edu.vn/*"
+        "*://oep.uit.edu.vn/*",
+        "*://dkhp.uit.edu.vn/*"
       ],
-      "js": ["content.js"],
+      "js": [
+        "content.js"
+      ],
       "run_at": "document_idle"
     }
   ]
