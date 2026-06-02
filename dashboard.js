@@ -78,6 +78,40 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('alert-container').style.display = 'none';
   });
 
+  // --- Modal Thêm Môn ---
+  document.getElementById('btn-add-course').addEventListener('click', () => {
+    document.getElementById('modal-add-course').classList.add('active');
+    document.getElementById('add-ma-mon').focus();
+  });
+  document.getElementById('btn-close-add-modal').addEventListener('click', closeAddModal);
+  document.getElementById('modal-add-course').addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) closeAddModal();
+  });
+  document.getElementById('btn-submit-add-course').addEventListener('click', addManualEvent);
+
+  // --- Modal Xóa Môn ---
+  document.getElementById('btn-cancel-delete').addEventListener('click', closeDeleteModal);
+  document.getElementById('modal-delete-confirm').addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) closeDeleteModal();
+  });
+  document.getElementById('btn-confirm-delete').addEventListener('click', executeDeleteEvent);
+
+  // --- Nút Undo xóa môn ---
+  document.getElementById('btn-undo-delete').addEventListener('click', () => {
+    if (!document.getElementById('btn-undo-delete').disabled) {
+      undoDelete();
+    }
+  });
+
+  // Load undo state từ storage (persist qua reload)
+  chrome.storage.local.get(['undo_last_event', 'undo_last_type'], (res) => {
+    if (res.undo_last_event && res.undo_last_type) {
+      _lastDeletedEvent = res.undo_last_event;
+      _lastDeletedType = res.undo_last_type;
+      updateUndoButton();
+    }
+  });
+
   // --- Nút cập nhật lịch thi (mở tab ẩn để content script cào) ---
   document.getElementById('btn-fetch-exams').addEventListener('click', () => {
     const btn = document.getElementById('btn-fetch-exams');
@@ -193,6 +227,240 @@ document.addEventListener('DOMContentLoaded', () => {
 function showStatus(el, text, color) {
   el.textContent = text;
   el.style.color = color;
+}
+
+// Hiển thị toast thông báo
+function showToast(text, borderColor = 'var(--green)') {
+  const toast = createEl('div', 'toast-notification', text);
+  toast.style.borderColor = borderColor;
+  toast.style.color = borderColor;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 2600);
+}
+
+// Tạo ID duy nhất cho event
+function generateEventId() {
+  return 'manual_' + Date.now() + '_' + Math.random().toString(36).substring(2, 8);
+}
+
+// ============================================================
+// THÊM MÔN HỌC THỦ CÔNG
+// ============================================================
+
+// Đóng modal thêm môn
+function closeAddModal() {
+  document.getElementById('modal-add-course').classList.remove('active');
+  document.getElementById('add-course-status').textContent = '';
+  ['add-ma-mon', 'add-gv', 'add-phong', 'add-tiet'].forEach((id) => {
+    const el = document.getElementById(id);
+    el.value = '';
+    el.classList.remove('input-error');
+  });
+  document.getElementById('add-thu').value = '';
+  document.getElementById('add-thu').classList.remove('input-error');
+}
+
+// Thêm môn học thủ công vào TKB
+function addManualEvent() {
+  const statusEl = document.getElementById('add-course-status');
+  const maMon = document.getElementById('add-ma-mon').value.trim();
+  const gv = document.getElementById('add-gv').value.trim();
+  const phong = document.getElementById('add-phong').value.trim();
+  const thu = document.getElementById('add-thu').value;
+  const tietStr = document.getElementById('add-tiet').value.trim();
+
+  // Clear errors
+  ['add-ma-mon', 'add-thu', 'add-tiet'].forEach((id) => {
+    document.getElementById(id).classList.remove('input-error');
+  });
+
+  // Validate
+  let hasError = false;
+  if (!maMon) {
+    document.getElementById('add-ma-mon').classList.add('input-error');
+    hasError = true;
+  }
+  if (!thu) {
+    document.getElementById('add-thu').classList.add('input-error');
+    hasError = true;
+  }
+  if (!tietStr || !/^[0-9]+$/.test(tietStr)) {
+    document.getElementById('add-tiet').classList.add('input-error');
+    hasError = true;
+  }
+  if (hasError) {
+    statusEl.textContent = '⚠ Vui lòng điền đầy đủ các trường bắt buộc!';
+    statusEl.style.color = 'var(--red)';
+    return;
+  }
+
+  const tiets = parseTietString(tietStr);
+  if (tiets.length === 0) {
+    document.getElementById('add-tiet').classList.add('input-error');
+    statusEl.textContent = '⚠ Tiết học không hợp lệ!';
+    statusEl.style.color = 'var(--red)';
+    return;
+  }
+
+  const startTiet = Math.min(...tiets);
+  const spanTiet = tiets.length;
+  const dayOfWeek = parseInt(thu, 10);
+
+  const newEvent = {
+    _id: generateEventId(),
+    title: maMon,
+    fullDesc: phong ? `Phòng: ${phong}` : '',
+    teacher: gv || '',
+    dayOfWeek: dayOfWeek,
+    startTiet: startTiet,
+    spanTiet: spanTiet,
+    startDate: '2000-01-01',
+    untilDate: '2099-12-31',
+    interval: 1,
+    isManual: true
+  };
+
+  chrome.storage.local.get(['saved_manual_events'], (res) => {
+    const manualEvents = res.saved_manual_events || [];
+    manualEvents.push(newEvent);
+    chrome.storage.local.set({ saved_manual_events: manualEvents }, () => {
+      closeAddModal();
+      renderTKB();
+      showToast(`✓ Đã thêm môn ${maMon} vào TKB`);
+    });
+  });
+}
+
+// ============================================================
+// XÓA MÔN HỌC TRÊN TKB
+// ============================================================
+
+let _pendingDeleteEvent = null;
+let _lastDeletedEvent = null;    // Cache event vừa xóa (để undo)
+let _lastDeletedType = null;     // 'manual' | 'ics'
+
+// Đóng modal xóa
+function closeDeleteModal() {
+  document.getElementById('modal-delete-confirm').classList.remove('active');
+  _pendingDeleteEvent = null;
+}
+
+// Hiện modal xác nhận xóa
+function promptDeleteEvent(ev) {
+  _pendingDeleteEvent = ev;
+  const subjectEl = document.getElementById('delete-subject-name');
+  subjectEl.textContent = ev.title || 'Không xác định';
+  document.getElementById('modal-delete-confirm').classList.add('active');
+}
+
+// Thực thi xóa event (có cache cho Undo)
+function executeDeleteEvent() {
+  if (!_pendingDeleteEvent) return;
+  const ev = _pendingDeleteEvent;
+
+  if (ev.isManual && ev._id) {
+    // Xóa khỏi saved_manual_events
+    chrome.storage.local.get(['saved_manual_events'], (res) => {
+      let manualEvents = res.saved_manual_events || [];
+      // Cache event trước khi xóa
+      const deletedEvent = manualEvents.find((e) => e._id === ev._id);
+      manualEvents = manualEvents.filter((e) => e._id !== ev._id);
+      chrome.storage.local.set({ saved_manual_events: manualEvents }, () => {
+        // Lưu undo state
+        _lastDeletedEvent = deletedEvent || ev;
+        _lastDeletedType = 'manual';
+        chrome.storage.local.set({
+          undo_last_event: _lastDeletedEvent,
+          undo_last_type: _lastDeletedType
+        });
+        updateUndoButton();
+        closeDeleteModal();
+        renderTKB();
+        showToast(`✓ Đã xóa môn ${ev.title}`);
+      });
+    });
+  } else {
+    // Ẩn event ICS (thêm vào hidden list)
+    const hideKey = `${ev.title}__${ev.dayOfWeek}__${ev.startTiet}__${ev.spanTiet}`;
+    chrome.storage.local.get(['hidden_tkb_events'], (res) => {
+      const hidden = res.hidden_tkb_events || [];
+      if (!hidden.includes(hideKey)) hidden.push(hideKey);
+      chrome.storage.local.set({ hidden_tkb_events: hidden }, () => {
+        // Lưu undo state
+        _lastDeletedEvent = ev;
+        _lastDeletedType = 'ics';
+        chrome.storage.local.set({
+          undo_last_event: _lastDeletedEvent,
+          undo_last_type: _lastDeletedType
+        });
+        updateUndoButton();
+        closeDeleteModal();
+        renderTKB();
+        showToast(`✓ Đã ẩn môn ${ev.title}`);
+      });
+    });
+  }
+}
+
+// Cập nhật trạng thái nút Undo trên toolbar
+function updateUndoButton() {
+  const btn = document.getElementById('btn-undo-delete');
+  if (!btn) return;
+
+  if (_lastDeletedEvent) {
+    btn.disabled = false;
+    btn.classList.add('has-undo');
+    const title = _lastDeletedEvent.title || 'Không xác định';
+    const shortTitle = title.split(' - ')[0].trim();
+    btn.innerHTML = `<span class="undo-label">↩ Hoàn tác</span><span class="undo-course-name">${shortTitle}</span>`;
+    btn.title = `Hoàn tác: khôi phục môn ${shortTitle}`;
+  } else {
+    btn.disabled = true;
+    btn.classList.remove('has-undo');
+    btn.innerHTML = '<span class="undo-label">↩ Hoàn tác</span>';
+    btn.title = 'Chưa có thao tác xóa nào để hoàn tác';
+  }
+}
+
+// Hoàn tác xóa môn (Undo)
+function undoDelete() {
+  if (!_lastDeletedEvent) return;
+
+  const ev = _lastDeletedEvent;
+  const type = _lastDeletedType;
+
+  if (type === 'manual') {
+    // Thêm lại event manual vào danh sách
+    chrome.storage.local.get(['saved_manual_events'], (res) => {
+      const manualEvents = res.saved_manual_events || [];
+      manualEvents.push(ev);
+      chrome.storage.local.set({ saved_manual_events: manualEvents }, () => {
+        clearUndoState();
+        renderTKB();
+        showToast(`↩ Đã hoàn tác — ${ev.title} đã được khôi phục`, 'var(--orange)');
+      });
+    });
+  } else if (type === 'ics') {
+    // Bỏ ẩn event ICS (xóa hideKey khỏi danh sách)
+    const hideKey = `${ev.title}__${ev.dayOfWeek}__${ev.startTiet}__${ev.spanTiet}`;
+    chrome.storage.local.get(['hidden_tkb_events'], (res) => {
+      let hidden = res.hidden_tkb_events || [];
+      hidden = hidden.filter((k) => k !== hideKey);
+      chrome.storage.local.set({ hidden_tkb_events: hidden }, () => {
+        clearUndoState();
+        renderTKB();
+        showToast(`↩ Đã hoàn tác — ${ev.title} đã được khôi phục`, 'var(--orange)');
+      });
+    });
+  }
+}
+
+// Xóa undo state (sau khi undo hoặc khi không cần nữa)
+function clearUndoState() {
+  _lastDeletedEvent = null;
+  _lastDeletedType = null;
+  chrome.storage.local.remove(['undo_last_event', 'undo_last_type']);
+  updateUndoButton();
 }
 
 // ============================================================
@@ -384,14 +652,40 @@ function renderTKB() {
   document.getElementById('week-display').textContent =
     `${p(monday.getDate())}/${p(monday.getMonth() + 1)}/${monday.getFullYear()} — ${p(sunday.getDate())}/${p(sunday.getMonth() + 1)}/${sunday.getFullYear()}`;
 
-  chrome.storage.local.get(['saved_tkb_ics'], (res) => {
-    const events = res.saved_tkb_ics || [];
+  chrome.storage.local.get(['saved_tkb_ics', 'saved_manual_events', 'hidden_tkb_events'], (res) => {
+    const icsEvents = res.saved_tkb_ics || [];
+    const manualEvents = res.saved_manual_events || [];
+    const hiddenKeys = new Set(res.hidden_tkb_events || []);
     const container = document.getElementById('dynamic-classes');
     container.textContent = '';
 
+    // Gộp tất cả events
+    const allEvents = [...icsEvents, ...manualEvents];
+
     let weekEvents = [];
 
-    events.forEach((ev) => {
+    allEvents.forEach((ev) => {
+      // Lọc bỏ event đã ẩn
+      const hideKey = `${ev.title}__${ev.dayOfWeek}__${ev.startTiet}__${ev.spanTiet}`;
+      if (hiddenKeys.has(hideKey)) return;
+
+      // Môn thủ công: luôn hiển thị mọi tuần
+      if (ev.isManual) {
+        let startRow = ev.startTiet + 1;
+        if (ev.startTiet === 0) startRow = 11;
+        if (ev.startTiet === 11) startRow = 12;
+
+        weekEvents.push({
+          ev: ev,
+          col: ev.dayOfWeek,
+          start: startRow,
+          span: ev.spanTiet,
+          end: startRow + ev.spanTiet - 1
+        });
+        return;
+      }
+
+      // Môn ICS: logic cũ
       const evStart = new Date(ev.startDate);
       const evUntil = new Date(ev.untilDate);
       const evMonday = getMonday(evStart);
@@ -409,7 +703,7 @@ function renderTKB() {
           eventDate.setDate(monday.getDate() + (ev.dayOfWeek === 8 ? 6 : ev.dayOfWeek - 2));
           const eventDateStr = `${eventDate.getFullYear()}-${p(eventDate.getMonth() + 1)}-${p(eventDate.getDate())}`;
           const baseCode = ev.title.split(' - ')[0].trim();
-          const isCancelledToday = events.some((c) =>
+          const isCancelledToday = allEvents.some((c) =>
             c.isCancelled && c.startDate === eventDateStr
             && (baseCode === c.title.split(' ')[0].trim()
               || baseCode.startsWith(c.title.split(' ')[0].trim() + '.'))
@@ -438,10 +732,14 @@ function renderTKB() {
     const columns = { 2: [], 3: [], 4: [], 5: [], 6: [], 7: [], 8: [] };
     weekEvents.forEach((e) => columns[e.col].push(e));
 
-    // Tạo card hiển thị cho 1 sự kiện trên lưới TKB
+    // Tạo card hiển thị cho 1 sự kiện trên lưới TKB (có nút xóa)
     function createCardNode(ev, isItem = false) {
+      // Wrapper cho card (chứa cả nút xóa)
+      const wrapDiv = createEl('div', 'class-card-wrap');
+
       let cls = 'class-card';
-      if (ev.isMakeup) cls += ' makeup-card';
+      if (ev.isManual) cls += ' manual-card';
+      else if (ev.isMakeup) cls += ' makeup-card';
       else if (ev.isCancelled) cls += ' cancelled-card';
       else if (ev.title.includes('.1') || (ev.fullDesc && (ev.fullDesc.includes('HT1') || ev.fullDesc.includes('TH')))) cls += ' ht1-card';
       if (isItem) cls += ' overlap-item';
@@ -456,7 +754,20 @@ function renderTKB() {
       div.appendChild(createEl('div', 'class-room', room));
       const td = createEl('div', 'class-teacher', ev.teacher || '');
       div.appendChild(td);
-      return div;
+
+      // Nút xóa (trash icon)
+      const deleteBtn = document.createElement('button');
+      deleteBtn.className = 'card-delete-btn';
+      deleteBtn.innerHTML = '🗑';
+      deleteBtn.title = `Xóa ${parts[0]}`;
+      deleteBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        promptDeleteEvent(ev);
+      });
+
+      wrapDiv.appendChild(div);
+      wrapDiv.appendChild(deleteBtn);
+      return wrapDiv;
     }
 
     for (let col in columns) {
@@ -478,6 +789,8 @@ function renderTKB() {
           wrapper.style.gridColumn = col;
           wrapper.style.gridRow = `${group[0].start} / span ${group[0].span}`;
           wrapper.style.zIndex = 10;
+          // DEBUG: log vị trí grid để kiểm tra offset
+          console.log(`[TKB DEBUG] "${group[0].ev.title}" | dayOfWeek=${group[0].ev.dayOfWeek} | startTiet=${group[0].ev.startTiet} | spanTiet=${group[0].ev.spanTiet} | gridCol=${col} | gridRow=${group[0].start}/span${group[0].span}`);
           wrapper.appendChild(createCardNode(group[0].ev));
           container.appendChild(wrapper);
         } else {
@@ -597,10 +910,31 @@ function renderExams() {
 let _allClasses = [];
 let _selectedCodes = [];
 
-// Parse chuỗi tiết: "123" → [1,2,3], "1011" → [10,11]
+// Parse chuỗi tiết: "123" → [1,2,3], "1011" → [10,11], "1234" → [1,2,3,4]
 function parseTietString(tietStr) {
   if (!tietStr) return [];
   const s = String(tietStr).trim();
+
+  // Heuristic: Nếu chuỗi KHÔNG chứa '0' → thử parse từng ký tự là tiết đơn (1-9)
+  // Vì tiết 0 không tồn tại, '0' chỉ xuất hiện trong tiết 10 trở lên.
+  // Nếu parse đơn bị trùng lặp (VD: "1112") → fallback sang greedy 2 chữ số.
+  const hasZero = s.includes('0');
+
+  if (!hasZero) {
+    const singleDigits = [];
+    for (let i = 0; i < s.length; i++) {
+      const d = parseInt(s[i], 10);
+      if (!isNaN(d) && d > 0) singleDigits.push(d);
+    }
+    // Kiểm tra trùng lặp: nếu không trùng → chắc chắn là tiết đơn
+    const unique = new Set(singleDigits);
+    if (unique.size === singleDigits.length) {
+      return singleDigits;
+    }
+    // Có trùng (VD: "1112" → [1,1,1,2]) → fallback sang greedy bên dưới
+  }
+
+  // Greedy two-digit parser: dùng khi có '0' hoặc khi single-digit bị trùng
   const tiets = [];
   let i = 0;
   while (i < s.length) {
@@ -773,6 +1107,18 @@ function populateKhoaFilter() {
   });
 }
 
+// Lấy nhóm gốc từ mã lớp: "IT001.CNVN.1" → "IT001.CNVN", "IT001.CNVN" → "IT001.CNVN"
+function getBaseGroup(maLop) {
+  if (!maLop) return '';
+  const parts = maLop.split('.');
+  // Nếu có >= 3 phần (VD: IT001.CNVN.1 = thực hành), nhóm gốc = 2 phần đầu
+  // Nếu có <= 2 phần (VD: IT001.CNVN = lý thuyết), nhóm gốc = chính nó
+  if (parts.length >= 3) {
+    return parts.slice(0, 2).join('.');
+  }
+  return maLop;
+}
+
 // ============================================================
 // RENDER: BẢNG LỚP HỌC PHẦN (XẾP LỚP)
 // ============================================================
@@ -815,10 +1161,12 @@ function renderCourseTable() {
     conflictCodes.add(c.b.maLop);
   });
 
-  // Ràng buộc 1: Tập hợp mã MH đã có lớp được chọn
+  // Ràng buộc 1: Tập hợp mã MH đã có lớp được chọn + nhóm gốc
   const selectedMaMH = new Set();
+  const selectedBaseGroups = new Set();
   selectedClasses.forEach((c) => {
     if (c.maMH) selectedMaMH.add(c.maMH);
+    if (c.maLop) selectedBaseGroups.add(getBaseGroup(c.maLop));
   });
 
   // Ràng buộc 2: Map "thu_tiet" → mã lớp đã chiếm slot
@@ -842,10 +1190,25 @@ function renderCourseTable() {
     let lockReason = '';
 
     if (!isSelected) {
+      // Ràng buộc mã MH: chỉ áp dụng giữa LÝ THUYẾT vs LÝ THUYẾT
+      // Môn thực hành (≥3 phần trong maLop) KHÔNG bị khóa bởi mã MH
+      // → chỉ bị khóa bởi trùng lịch (kiểm tra thời gian bên dưới)
       if (c.maMH && selectedMaMH.has(c.maMH)) {
-        isLockedByMaMH = true;
-        const selectedLop = selectedClasses.find((s) => s.maMH === c.maMH);
-        lockReason = `Đã chọn lớp ${selectedLop ? selectedLop.maLop : ''} cùng mã MH ${c.maMH}`;
+        const thisParts = (c.maLop || '').split('.').length;
+        const isThisPractice = thisParts >= 3;
+
+        if (!isThisPractice) {
+          // Candidate là lý thuyết → chặn nếu đã chọn lý thuyết khác cùng mã MH
+          const selectedTheory = selectedClasses.find((s) =>
+            s.maMH === c.maMH && (s.maLop || '').split('.').length <= 2
+          );
+          if (selectedTheory) {
+            isLockedByMaMH = true;
+            lockReason = `Đã chọn lớp LT ${selectedTheory.maLop} cùng mã MH ${c.maMH}`;
+          }
+        }
+        // Nếu candidate là thực hành → KHÔNG khóa bởi mã MH
+        // → Cho phép chọn tự do, chỉ chặn nếu trùng thời gian (bên dưới)
       }
 
       if (!isLockedByMaMH && c.thu) {

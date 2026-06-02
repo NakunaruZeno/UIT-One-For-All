@@ -2,43 +2,237 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Cài đặt tài khoản</title>
+    <title>UIT One For All — Cài đặt</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { background: #1e1e2e; color: #cdd6f4; margin: 0; padding: 20px; font-family: sans-serif; width: 300px; }
-        h2 { margin: 0 0 20px 0; text-align: center; font-size: 20px; color: #f5c2e7; }
-        .input-group { margin-bottom: 15px; }
-        .input-group label { display: block; margin-bottom: 5px; font-size: 14px; }
-        .input-group input { width: 100%; padding: 10px; box-sizing: border-box; border: 1px solid #45475a; border-radius: 6px; background: #181825; color: #cdd6f4; font-size: 14px; }
-        .input-group input:focus { outline: none; border-color: #89b4fa; }
-        .button-group { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
-        button { padding: 10px 15px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        button:hover { opacity: 0.8; }
-        .btn-save { background: #89b4fa; color: #11111b; }
-        .btn-sync { background: #fab387; color: #11111b; }
-        .btn-tkb { background: #a6e3a1; color: #11111b; }
-        #status { text-align: center; font-size: 13px; color: #a6e3a1; margin-top: 10px; display: none; }
+        /* =============================================
+           DESIGN TOKENS
+        ============================================= */
+        :root {
+            --bg:        #f8f9fa;
+            --surface:   #ffffff;
+            --surface-2: #f1f3f5;
+            --border:    #e9ecef;
+            --border-h:  #dee2e6;
+            --text:      #212529;
+            --text-2:    #495057;
+            --text-3:    #868e96;
+            --blue:      #3b82f6;
+            --blue-dim:  rgba(59, 130, 246, 0.1);
+            --green:     #10b981;
+            --red:       #ef4444;
+            --radius:    10px;
+            --shadow:    0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg:        #0d1117;
+                --surface:   #161b22;
+                --surface-2: #21262d;
+                --border:    #30363d;
+                --border-h:  #484f58;
+                --text:      #c9d1d9;
+                --text-2:    #8b949e;
+                --text-3:    #6e7681;
+                --blue:      #58a6ff;
+                --blue-dim:  rgba(88, 166, 255, 0.15);
+                --green:     #3fb950;
+                --red:       #f85149;
+                --shadow:    0 4px 12px rgba(0,0,0,0.3);
+            }
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Be Vietnam Pro', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            width: 320px;
+            font-size: 13px;
+            line-height: 1.55;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        /* =============================================
+           HEADER
+        ============================================= */
+        .popup-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface);
+        }
+        .popup-logo {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            flex-shrink: 0;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        .popup-title {
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+            color: var(--text);
+        }
+        .popup-title span { color: var(--blue); }
+
+        /* =============================================
+           BODY
+        ============================================= */
+        .popup-body {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            background: var(--bg);
+        }
+
+        /* =============================================
+           FIELDS
+        ============================================= */
+        .field { display: flex; flex-direction: column; gap: 6px; }
+
+        .field label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-2);
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+        }
+
+        .field input {
+            width: 100%;
+            padding: 10px 14px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            color: var(--text);
+            font-family: inherit;
+            font-size: 13px;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .field input:focus {
+            border-color: var(--blue);
+            box-shadow: 0 0 0 3px var(--blue-dim);
+        }
+        .field input::placeholder { color: var(--text-3); font-weight: 400; }
+
+        /* =============================================
+           DIVIDER
+        ============================================= */
+        .popup-divider {
+            height: 1px;
+            background: var(--border);
+            margin: 6px 0;
+        }
+
+        /* =============================================
+           BUTTONS
+        ============================================= */
+        .btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            width: 100%;
+            border: none;
+            border-radius: var(--radius);
+            font-family: inherit;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s, border-color 0.2s, color 0.2s,
+                        transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s;
+        }
+        .btn:active { transform: translateY(1px) scale(0.97); }
+
+        /* Primary — hành động chính */
+        .btn-primary {
+            padding: 12px 16px;
+            font-size: 13px;
+            background: var(--blue);
+            color: #ffffff;
+            box-shadow: 0 2px 8px var(--blue-dim);
+        }
+        .btn-primary:hover {
+            opacity: 0.9;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        /* Secondary — hành động phụ */
+        .btn-secondary {
+            padding: 10px 16px;
+            font-size: 13px;
+            background: var(--surface);
+            color: var(--text-2);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+        }
+        .btn-secondary:hover { border-color: var(--border-h); color: var(--text); background: var(--surface-2); }
+
+        /* Tertiary — điều hướng */
+        .btn-tertiary {
+            padding: 8px;
+            font-size: 12px;
+            font-weight: 500;
+            background: transparent;
+            color: var(--text-3);
+            border: 1px solid transparent;
+        }
+        .btn-tertiary:hover { color: var(--blue); }
+        .btn-tertiary:active { transform: none; }
+
+        /* =============================================
+           STATUS MESSAGE
+        ============================================= */
+        #status {
+            text-align: center;
+            font-size: 12px;
+            font-weight: 600;
+            min-height: 18px;
+            display: none;
+            transition: color 0.2s;
+            padding: 4px;
+            border-radius: 6px;
+        }
     </style>
 </head>
 <body>
-    <h2>UIT One For All</h2>
-    <div class="input-group">
-        <label>Mã số sinh viên</label>
-        <input type="text" id="username" placeholder="Nhập MSSV...">
+    <header class="popup-header">
+        <img class="popup-logo" src="icon/Icon128.png" alt="UIT One For All">
+        <div class="popup-title">UIT <span>One For All</span></div>
+    </header>
+
+    <div class="popup-body">
+        <div class="field">
+            <label>Mã số sinh viên</label>
+            <input type="text" id="username" placeholder="Nhập MSSV...">
+        </div>
+        <div class="field">
+            <label>Mật khẩu</label>
+            <input type="password" id="password" placeholder="Nhập mật khẩu...">
+        </div>
+        <div class="field">
+            <label>Tự động cào (giờ/lần) — mặc định: 3</label>
+            <input type="number" id="sync-interval" min="1" max="24" value="3">
+        </div>
+
+        <button id="btn-save" class="btn btn-primary">Lưu cài đặt</button>
+        <div id="status"></div>
+
+        <div class="popup-divider"></div>
+
+        <button id="btn-sync" class="btn btn-secondary">↻ Đồng bộ dữ liệu ngay</button>
+        <button id="btn-tkb" class="btn btn-tertiary">Xem Bảng Điều Khiển →</button>
     </div>
-    <div class="input-group">
-        <label>Mật khẩu</label>
-        <input type="password" id="password" placeholder="Nhập mật khẩu...">
-    </div>
-    <div class="input-group">
-        <label>Tự động cào (Giờ/lần) - Mặc định: 3</label>
-        <input type="number" id="sync-interval" min="1" max="24" value="3">
-    </div>
-    <div class="button-group">
-        <button id="btn-save" class="btn-save">Lưu Cài Đặt</button>
-        <button id="btn-sync" class="btn-sync">Đồng bộ dữ liệu ngay</button>
-        <button id="btn-tkb" class="btn-tkb">Xem Bảng Điều Khiển</button>
-    </div>
-    <div id="status">Đã lưu thành công!</div>
+
     <script src="popup.js"></script>
 </body>
 </html>

@@ -647,9 +647,44 @@
           let spanTiet = 1;
           if (tietMatch) {
             const tStr = tietMatch[1];
-            startTiet = parseInt(tStr[0], 10);
-            if (startTiet === 0) startTiet = 10;
-            spanTiet = tStr.length;
+            // Parse chuỗi tiết chính xác (xử lý cả tiết 10-16)
+            const hasZero = tStr.includes('0');
+            const tiets = [];
+
+            if (!hasZero) {
+              const singleDigits = [];
+              for (let idx = 0; idx < tStr.length; idx++) {
+                const d = parseInt(tStr[idx], 10);
+                if (!isNaN(d) && d > 0) singleDigits.push(d);
+              }
+              const unique = new Set(singleDigits);
+              if (unique.size === singleDigits.length) {
+                tiets.push(...singleDigits);
+              }
+            }
+
+            if (tiets.length === 0) {
+              let idx = 0;
+              while (idx < tStr.length) {
+                if (idx + 1 < tStr.length) {
+                  const twoDigit = parseInt(tStr.substring(idx, idx + 2), 10);
+                  if (twoDigit >= 10 && twoDigit <= 16) {
+                    tiets.push(twoDigit);
+                    idx += 2;
+                    continue;
+                  }
+                }
+                const oneDigit = parseInt(tStr[idx], 10);
+                if (!isNaN(oneDigit) && oneDigit > 0) {
+                  tiets.push(oneDigit);
+                }
+                idx++;
+              }
+            }
+            if (tiets.length > 0) {
+              startTiet = Math.min(...tiets);
+              spanTiet = tiets.length;
+            }
           } else if (description.toLowerCase().includes("tối")) {
             startTiet = 11;
             spanTiet = 1;
