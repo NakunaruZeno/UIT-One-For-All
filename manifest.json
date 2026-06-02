@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "UIT One For All",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "Auto Login, Cào Điểm, Lịch Thi, TKB ICS, Cảnh báo Lịch học, Auto Survey, Hẹn giờ ĐKHP & Xếp Lớp TKB",
   "icons": {
     "16": "icon/Icon16.png",
