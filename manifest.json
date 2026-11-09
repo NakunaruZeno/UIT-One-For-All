@@ -1,51 +1,59 @@
 {
   "manifest_version": 3,
   "name": "UIT One For All",
-  "version": "1.4.1",
-  "description": "Auto Login, Cào Điểm, Lịch Thi, TKB ICS, Cảnh báo Lịch học, Auto Survey, Hẹn giờ ĐKHP & Xếp Lớp TKB",
-  "icons": {
-    "16": "icon/Icon16.png",
-    "24": "icon/Icon24.png",
-    "32": "icon/Icon32.png",
-    "64": "icon/Icon64.png",
-    "128": "icon/Icon128.png"
-  },
-  "author": "NakunaruZeno",
-  "action": {
-    "default_popup": "popup.html",
-    "default_title": "Cài đặt UIT Extension",
-    "default_icon": "icon/Icon64.png"
-  },
+  "version": "1.5.0",
+  "description": "Bộ công cụ học vụ toàn diện dành cho sinh viên UIT: Tự động đăng nhập SSO, Thời khóa biểu, Bảng điểm GPA, Lịch thi, Xếp lớp & ĐKHP.",
   "permissions": [
     "storage",
     "alarms",
     "notifications",
     "tabs",
-    "windows"
+    "scripting"
   ],
   "host_permissions": [
-    "*://student.uit.edu.vn/*",
-    "*://courses.uit.edu.vn/*",
-    "*://daa.uit.edu.vn/*",
-    "*://survey.uit.edu.vn/*",
-    "*://oep.uit.edu.vn/*",
-    "*://dkhp.uit.edu.vn/*"
+    "https://daa.uit.edu.vn/*",
+    "https://oep.uit.edu.vn/*",
+    "https://courses.uit.edu.vn/*",
+    "https://dkhp.uit.edu.vn/*",
+    "https://survey.uit.edu.vn/*",
+    "https://portal.uit.edu.vn/*",
+    "https://sso.uit.edu.vn/*"
   ],
+  "icons": {
+    "16": "assets/icons/Icon16.png",
+    "24": "assets/icons/Icon24.png",
+    "32": "assets/icons/Icon32.png",
+    "64": "assets/icons/Icon64.png",
+    "128": "assets/icons/Icon128.png"
+  },
+  "action": {
+    "default_popup": "src/popup/popup.html",
+    "default_title": "UIT One For All",
+    "default_icon": {
+      "16": "assets/icons/Icon16.png",
+      "24": "assets/icons/Icon24.png",
+      "32": "assets/icons/Icon32.png",
+      "64": "assets/icons/Icon64.png",
+      "128": "assets/icons/Icon128.png"
+    }
+  },
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "src/background/index.js"
   },
   "content_scripts": [
     {
       "matches": [
-        "*://student.uit.edu.vn/*",
-        "*://courses.uit.edu.vn/*",
-        "*://daa.uit.edu.vn/*",
-        "*://survey.uit.edu.vn/*",
-        "*://oep.uit.edu.vn/*",
-        "*://dkhp.uit.edu.vn/*"
+        "https://daa.uit.edu.vn/*",
+        "https://oep.uit.edu.vn/*",
+        "https://courses.uit.edu.vn/*",
+        "https://dkhp.uit.edu.vn/*",
+        "https://survey.uit.edu.vn/*",
+        "https://portal.uit.edu.vn/*",
+        "https://sso.uit.edu.vn/*"
       ],
       "js": [
-        "content.js"
+        "src/lib/crypto.js",
+        "src/content/index.js"
       ],
       "run_at": "document_idle"
     }

@@ -1,0 +1,19 @@
+# Agent & IDE specifics
+.agents/
+skills-lock.json
+.vscode/
+.idea/
+
+# OS metadata
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs & scratch
+*.log
+*.tmp
+scratch/
+
+# Release bundles (uploaded directly to GitHub Releases)
+*.zip
+*.crx

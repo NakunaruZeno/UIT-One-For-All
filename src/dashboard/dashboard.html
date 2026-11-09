@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UIT One For All — Bảng Điều Khiển Học Vụ</title>
+  <link rel="icon" type="image/png" href="../../assets/icons/Icon32.png">
+  <link rel="stylesheet" href="./dashboard.css">
+</head>
+<body>
+  <!-- Sidebar Navigation -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <img src="../../assets/icons/Icon64.png" alt="UIT Logo" class="sidebar-logo">
+      <div class="sidebar-brand-info">
+        <div class="sidebar-brand-title">
+          <span>UIT One For All</span>
+          <span class="sidebar-version mono">v1.5</span>
+        </div>
+        <span class="sidebar-brand-sub" id="sidebar-student-id">Cổng học vụ cá nhân</span>
+      </div>
+    </div>
+
+    <div class="nav-section-label">Theo dõi học tập</div>
+    <div class="nav-list">
+      <button class="nav-item active" data-target="tab-tkb">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <rect width="18" height="18" x="3" y="4" rx="2"></rect>
+          <path d="M16 2v4M8 2v4M3 10h18"></path>
+        </svg>
+        <span>Thời Khóa Biểu</span>
+      </button>
+
+      <button class="nav-item" data-target="tab-grades">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
+          <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
+        </svg>
+        <span>Bảng Điểm &amp; GPA</span>
+      </button>
+
+      <button class="nav-item" data-target="tab-exams">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"></path>
+          <rect width="6" height="4" x="9" y="3" rx="1"></rect>
+          <path d="m9 14 2 2 4-4"></path>
+        </svg>
+        <span>Lịch Thi Học Kỳ</span>
+      </button>
+    </div>
+
+    <div class="nav-section-label" style="margin-top: 10px;">Công cụ &amp; Tự động hóa</div>
+    <div class="nav-list">
+      <button class="nav-item" data-target="tab-scheduler">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <rect width="7" height="7" x="3" y="3" rx="1"></rect>
+          <rect width="7" height="7" x="14" y="3" rx="1"></rect>
+          <rect width="7" height="7" x="14" y="14" rx="1"></rect>
+          <rect width="7" height="7" x="3" y="14" rx="1"></rect>
+        </svg>
+        <span>Xếp Lớp Học (XLSX)</span>
+      </button>
+
+      <button class="nav-item" data-target="tab-dkhp">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polyline points="12 6 12 12 16 14"></polyline>
+        </svg>
+        <span>Hẹn Giờ ĐKHP</span>
+      </button>
+
+      <button class="nav-item" data-target="tab-survey">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" x2="8" y1="13" y2="13"></line>
+          <line x1="16" x2="8" y1="17" y2="17"></line>
+        </svg>
+        <span>Tự Động Khảo Sát</span>
+      </button>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="sync-status-box">
+        <div class="sync-status-row">
+          <span>Trạng thái TKB</span>
+          <span id="sidebar-tkb-status" class="mono" style="font-weight: 600;">—</span>
+        </div>
+        <div class="sync-status-row">
+          <span>Cập nhật lần cuối</span>
+          <span id="sidebar-last-sync" class="mono">—</span>
+        </div>
+      </div>
+
+      <button id="btn-global-sync" class="btn btn-primary" style="width: 100%;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+          <path d="M3 3v5h5"></path>
+          <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"></path>
+          <path d="M16 16h5v5"></path>
+        </svg>
+        <span id="global-sync-text">Đồng Bộ Từ Portal</span>
+      </button>
+
+      <button id="btn-theme-toggle" class="btn" style="width: 100%;">
+        <svg id="theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="4"></circle>
+          <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path>
+        </svg>
+        <svg id="theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
+        </svg>
+        <span id="theme-toggle-label">Giao diện Sáng</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Workspace -->
+  <main class="main-content">
+
+    <!-- ===================================================================
+         TAB 1: THỜI KHÓA BIỂU (7-COLUMN GRID THỨ 2 -> CHỦ NHẬT)
+         =================================================================== -->
+    <section id="tab-tkb" class="tab-pane active">
+      <div class="page-header">
+        <div class="page-title-group">
+          <h1 class="page-title">Thời Khóa Biểu Tuần</h1>
+          <p class="page-subtitle">Tự động cập nhật lịch học từ UIT Portal và thông báo Nghỉ / Học bù từ DAA &amp; OEP.</p>
+        </div>
+
+        <div class="toolbar-group">
+          <div class="week-navigator">
+            <button id="btn-prev-week" class="week-nav-btn" title="Tuần trước">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m15 18-6-6 6-6"></path>
+              </svg>
+            </button>
+            <button id="btn-today-week" class="week-nav-btn" title="Về tuần hiện tại">Hôm nay</button>
+            <span id="week-label" class="week-range-label mono">Đang tải...</span>
+            <button id="btn-next-week" class="week-nav-btn" title="Tuần sau">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m9 18 6-6-6-6"></path>
+              </svg>
+            </button>
+          </div>
+
+          <a href="https://portal.uit.edu.vn/sinh-vien/tkb?source=auto_check_tkb" target="_blank" rel="noopener" class="btn btn-primary" style="text-decoration: none;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+              <path d="M3 3v5h5"></path>
+            </svg>
+            <span>Làm mới từ Portal</span>
+          </a>
+
+          <button id="btn-add-course-modal" class="btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 5v14M5 12h14"></path>
+            </svg>
+            <span>Thêm Lịch Ngoài</span>
+          </button>
+
+          <button id="btn-reset-hidden" class="btn" title="Khôi phục tất cả các buổi học đã ẩn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+              <path d="M3 3v5h5"></path>
+            </svg>
+            <span>Hiện Môn Đã Ẩn</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Legend -->
+      <div class="toolbar-group" style="font-size: 12px; color: var(--text-secondary);">
+        <span class="badge badge-accent">Lịch học chính khóa</span>
+        <span class="badge badge-success">Lịch học bù (DAA/OEP)</span>
+        <span class="badge badge-danger">Lịch báo nghỉ (DAA/OEP)</span>
+        <span class="badge badge-violet">Lịch cá nhân tự thêm</span>
+        <span style="margin-left: auto; font-size: 11.5px; color: var(--text-muted);">Nhấn vào ô môn học để xem chi tiết hoặc ẩn buổi học</span>
+      </div>
+
+      <div class="tkb-surface">
+        <div class="tkb-grid" id="tkb-grid">
+          <div class="tkb-header-cell" style="grid-column: 1; grid-row: 1;">Tiết</div>
+          <div class="tkb-header-cell" data-day="1" style="grid-column: 2; grid-row: 1;">
+            <span>Thứ 2</span><span class="tkb-header-date mono" id="date-col-1"></span>
+          </div>
+          <div class="tkb-header-cell" data-day="2" style="grid-column: 3; grid-row: 1;">
+            <span>Thứ 3</span><span class="tkb-header-date mono" id="date-col-2"></span>
+          </div>
+          <div class="tkb-header-cell" data-day="3" style="grid-column: 4; grid-row: 1;">
+            <span>Thứ 4</span><span class="tkb-header-date mono" id="date-col-3"></span>
+          </div>
+          <div class="tkb-header-cell" data-day="4" style="grid-column: 5; grid-row: 1;">
+            <span>Thứ 5</span><span class="tkb-header-date mono" id="date-col-4"></span>
+          </div>
+          <div class="tkb-header-cell" data-day="5" style="grid-column: 6; grid-row: 1;">
+            <span>Thứ 6</span><span class="tkb-header-date mono" id="date-col-5"></span>
+          </div>
+          <div class="tkb-header-cell" data-day="6" style="grid-column: 7; grid-row: 1;">
+            <span>Thứ 7</span><span class="tkb-header-date mono" id="date-col-6"></span>
+          </div>
+          <div class="tkb-header-cell" data-day="0" style="grid-column: 8; grid-row: 1;">
+            <span>Chủ Nhật</span><span class="tkb-header-date mono" id="date-col-0"></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================================
+         TAB 2: BẢNG ĐIỂM & PHÂN TÍCH GPA
+         =================================================================== -->
+    <section id="tab-grades" class="tab-pane">
+      <div class="page-header">
+        <div class="page-title-group">
+          <h1 class="page-title">Bảng Điểm &amp; Phân Tích Học Tập</h1>
+          <p class="page-subtitle">Tổng hợp kết quả các học kỳ, tín chỉ tích lũy và điểm trung bình từ UIT Portal.</p>
+        </div>
+
+        <div class="toolbar-group">
+          <input type="text" id="grade-search-input" class="input" placeholder="Tìm mã môn hoặc tên môn..." style="width: 240px;">
+          <select id="grade-semester-filter" class="select">
+            <option value="all">Tất cả học kỳ</option>
+          </select>
+          <a href="https://portal.uit.edu.vn/sinh-vien/bang-diem?source=auto_check_grade" target="_blank" rel="noopener" class="btn btn-primary" style="text-decoration: none;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+              <path d="M3 3v5h5"></path>
+            </svg>
+            <span>Làm mới từ Portal</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- 4-Card Bento Overview -->
+      <div class="bento-grid">
+        <div class="bento-card">
+          <div class="bento-card-top">
+            <span>GPA Tích Lũy</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline>
+              <polyline points="16 7 22 7 22 13"></polyline>
+            </svg>
+          </div>
+          <div id="stat-gpa-tichluy" class="bento-value mono">—</div>
+          <div class="bento-sub">
+            <span>Xếp loại học lực:</span>
+            <span id="stat-gpa-rank" class="badge badge-accent">—</span>
+          </div>
+        </div>
+
+        <div class="bento-card">
+          <div class="bento-card-top">
+            <span>GPA Toàn Khóa</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 20V10M18 20V4M6 20v-4"></path>
+            </svg>
+          </div>
+          <div id="stat-gpa-toankhoa" class="bento-value mono">—</div>
+          <div class="bento-sub">Trung bình có trọng số tất cả môn</div>
+        </div>
+
+        <div class="bento-card">
+          <div class="bento-card-top">
+            <span>Tín Chỉ Tích Lũy</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"></path>
+            </svg>
+          </div>
+          <div id="stat-tc-tichluy" class="bento-value mono">—</div>
+          <div class="bento-sub" id="stat-tc-sub">Đã học: — TC</div>
+          <div class="progress-track">
+            <div id="stat-tc-progress" class="progress-fill" style="width: 0%;"></div>
+          </div>
+        </div>
+
+        <div class="bento-card">
+          <div class="bento-card-top">
+            <span>Số Học Phần</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+          </div>
+          <div id="stat-course-count" class="bento-value mono">0</div>
+          <div class="bento-sub" id="stat-pass-rate">Đạt: 0 môn</div>
+        </div>
+      </div>
+
+      <div class="table-card">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th style="width: 110px;">Mã MH</th>
+              <th>Tên Học Phần</th>
+              <th style="width: 65px; text-align: center;">TC</th>
+              <th style="width: 70px; text-align: center;">QT</th>
+              <th style="width: 70px; text-align: center;">TH</th>
+              <th style="width: 70px; text-align: center;">GK</th>
+              <th style="width: 70px; text-align: center;">CK</th>
+              <th style="width: 95px; text-align: center;">Điểm TB</th>
+              <th style="width: 150px;">Ghi Chú</th>
+            </tr>
+          </thead>
+          <tbody id="grades-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ===================================================================
+         TAB 3: LỊCH THI HỌC KỲ
+         =================================================================== -->
+    <section id="tab-exams" class="tab-pane">
+      <div class="page-header">
+        <div class="page-title-group">
+          <h1 class="page-title">Lịch Thi Học Kỳ</h1>
+          <p class="page-subtitle">Tra cứu lịch thi từ UIT Portal (<span class="mono">portal.uit.edu.vn/sinh-vien/lich-thi</span>) hoặc tự thêm lịch thi tại lớp.</p>
+        </div>
+
+        <div class="toolbar-group">
+          <select id="exam-hocky" class="select">
+            <option value="1">Học kỳ 1</option>
+            <option value="2" selected>Học kỳ 2</option>
+            <option value="3">Học kỳ 3 (Hè)</option>
+          </select>
+
+          <select id="exam-namhoc" class="select">
+            <option value="2024">NH 2024-2025</option>
+            <option value="2025" selected>NH 2025-2026</option>
+            <option value="2026">NH 2026-2027</option>
+          </select>
+
+          <button id="btn-fetch-exams" class="btn btn-primary">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" x2="12" y1="15" y2="3"></line>
+            </svg>
+            <span>Tải Lịch Thi Từ Portal</span>
+          </button>
+
+          <button id="btn-add-exam-modal" class="btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 5v14M5 12h14"></path>
+            </svg>
+            <span>Thêm Lịch Thi</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="table-card">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th style="width: 55px; text-align: center;">STT</th>
+              <th style="width: 140px;">Mã Lớp</th>
+              <th>Tên Môn Học</th>
+              <th style="width: 150px;">Ngày Thi</th>
+              <th style="width: 140px;">Ca / Giờ Thi</th>
+              <th style="width: 120px;">Phòng Thi</th>
+              <th style="width: 130px;">Đếm Ngược</th>
+              <th style="width: 60px; text-align: center;">Xóa</th>
+            </tr>
+          </thead>
+          <tbody id="exams-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ===================================================================
+         TAB 4: XẾP LỚP HỌC (XLSX SCHEDULER)
+         =================================================================== -->
+    <section id="tab-scheduler" class="tab-pane">
+      <div class="page-header">
+        <div class="page-title-group">
+          <h1 class="page-title">Xếp Lớp Học &amp; Mô Phỏng ĐKHP</h1>
+          <p class="page-subtitle">Tải file Excel Thời khóa biểu dự kiến của P.Đào tạo để xếp thử lịch học, tự động khóa cặp Lý thuyết - Thực hành và kiểm tra trùng tiết.</p>
+        </div>
+
+        <div class="toolbar-group">
+          <input type="file" id="input-xlsx" accept=".xlsx,.xls" style="display: none;">
+          <button id="btn-trigger-xlsx" class="btn btn-primary">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <path d="M12 18v-6M9 15l3-3 3 3"></path>
+            </svg>
+            <span>Nhập File TKB (.xlsx)</span>
+          </button>
+
+          <button id="btn-create-custom-course" class="btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 5v14M5 12h14"></path>
+            </svg>
+            <span>Tạo Môn Tự Do</span>
+          </button>
+
+          <select id="saved-schedules-select" class="select">
+            <option value="">— Chọn phương án đã lưu —</option>
+          </select>
+
+          <button id="btn-save-schedule" class="btn btn-success">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+              <polyline points="17 21 17 13 7 13 7 21"></polyline>
+            </svg>
+            <span>Lưu Phương Án</span>
+          </button>
+
+          <button id="btn-delete-schedule" class="btn btn-danger btn-icon-only" title="Xóa phương án đang chọn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+          </button>
+
+          <button id="btn-clear-scheduler" class="btn" title="Bỏ chọn toàn bộ lớp hiện tại">Làm Mới</button>
+        </div>
+      </div>
+
+      <!-- Selected Classes Summary Bar -->
+      <div class="selected-classes-bar">
+        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; flex: 1;">
+          <span style="font-size: 12px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">
+            Đã chọn (<span id="scheduler-selected-count" class="mono">0</span> mã lớp):
+          </span>
+          <div id="scheduler-chips" class="chip-list">
+            <span style="font-size: 12px; color: var(--text-muted);">Chưa chọn lớp nào</span>
+          </div>
+        </div>
+
+        <button id="btn-send-to-dkhp" class="btn btn-primary btn-sm">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="22" x2="11" y1="2" y2="13"></line>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+          </svg>
+          <span>Chuyển Mã Lớp Sang Hẹn Giờ ĐKHP</span>
+        </button>
+      </div>
+
+      <div class="scheduler-workspace">
+        <!-- Left Panel: Course Search & Accordion -->
+        <div class="scheduler-sidebar">
+          <input type="text" id="search-course" class="input" placeholder="Tìm theo mã môn (IT001) hoặc tên môn...">
+          <div id="course-list" class="course-accordion-list">
+            <div class="empty-state" style="padding: 30px 10px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+              </svg>
+              <span>Tải lên file Excel (.xlsx) danh sách lớp mở để bắt đầu xếp lịch.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Panel: 7-Day Preview Grid -->
+        <div class="tkb-surface">
+          <div class="tkb-grid" id="scheduler-grid">
+            <div class="tkb-header-cell" style="grid-column: 1; grid-row: 1;">Tiết</div>
+            <div class="tkb-header-cell" style="grid-column: 2; grid-row: 1;">Thứ 2</div>
+            <div class="tkb-header-cell" style="grid-column: 3; grid-row: 1;">Thứ 3</div>
+            <div class="tkb-header-cell" style="grid-column: 4; grid-row: 1;">Thứ 4</div>
+            <div class="tkb-header-cell" style="grid-column: 5; grid-row: 1;">Thứ 5</div>
+            <div class="tkb-header-cell" style="grid-column: 6; grid-row: 1;">Thứ 6</div>
+            <div class="tkb-header-cell" style="grid-column: 7; grid-row: 1;">Thứ 7</div>
+            <div class="tkb-header-cell" style="grid-column: 8; grid-row: 1;">Chủ Nhật</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================================
+         TAB 5: HẸN GIỜ ĐĂNG KÝ HỌC PHẦN TỰ ĐỘNG (AUTO ĐKHP)
+         =================================================================== -->
+    <section id="tab-dkhp" class="tab-pane">
+      <div class="page-header">
+        <div class="page-title-group">
+          <h1 class="page-title">Hẹn Giờ Đăng Ký Học Phần Tự Động</h1>
+          <p class="page-subtitle">Tự động mở cổng <span class="mono">dkhp.uit.edu.vn/app/reg</span>, lọc và tích chọn danh sách mã lớp ngay khi đến giờ mở cổng.</p>
+        </div>
+
+        <div class="toolbar-group">
+          <button id="btn-import-from-scheduler" class="btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <rect width="7" height="7" x="3" y="3" rx="1"></rect>
+              <rect width="7" height="7" x="14" y="3" rx="1"></rect>
+              <rect width="7" height="7" x="14" y="14" rx="1"></rect>
+              <rect width="7" height="7" x="3" y="14" rx="1"></rect>
+            </svg>
+            <span>Lấy Mã Lớp Đang Chọn Từ Tab Xếp Lớp</span>
+          </button>
+
+          <a href="https://dkhp.uit.edu.vn/app" target="_blank" rel="noopener" class="btn" style="text-decoration: none;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+              <polyline points="15 3 21 3 21 9"></polyline>
+              <line x1="10" x2="21" y1="14" y2="3"></line>
+            </svg>
+            <span>Mở Cổng ĐKHP Đăng Nhập Trước</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="settings-grid">
+        <div class="panel-card">
+          <div class="panel-card-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 20h9"></path>
+              <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path>
+            </svg>
+            <span>Cấu Hình Danh Sách Mã Lớp &amp; Thời Gian</span>
+          </div>
+
+          <div class="form-field">
+            <label for="dkhp-courses-input">Danh sách Mã Lớp (mỗi dòng 1 mã hoặc cách nhau dấu phẩy)</label>
+            <textarea id="dkhp-courses-input" class="textarea mono" rows="5" placeholder="IT001.Q31&#10;IT001.Q31.1&#10;MA006.Q12"></textarea>
+          </div>
+
+          <div class="form-field">
+            <label>Các mã lớp đã nhận diện (<span id="dkhp-parsed-count" class="mono">0</span> lớp)</label>
+            <div id="dkhp-parsed-chips" class="chip-list">
+              <span style="font-size: 12px; color: var(--text-muted);">Chưa có mã lớp nào</span>
+            </div>
+          </div>
+
+          <div class="form-field">
+            <label for="dkhp-datetime">Thời điểm kích hoạt tự động đăng ký</label>
+            <input type="datetime-local" id="dkhp-datetime" class="input mono" step="1">
+          </div>
+
+          <div style="display: flex; gap: 10px;">
+            <button id="btn-save-dkhp" class="btn btn-primary" style="flex: 1;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+              </svg>
+              <span>Bật Hẹn Giờ Tự Động</span>
+            </button>
+
+            <button id="btn-cancel-dkhp" class="btn btn-danger" style="display: none;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                <rect width="14" height="14" x="5" y="5" rx="2"></rect>
+              </svg>
+              <span>Hủy Hẹn Giờ</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="panel-card">
+          <div class="panel-card-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            <span>Đồng Hồ Đếm Ngược &amp; Trạng Thái</span>
+          </div>
+
+          <div class="countdown-box">
+            <span id="dkhp-status-badge" class="badge badge-warning">Đang tắt hẹn giờ</span>
+            <div id="dkhp-countdown" class="countdown-clock mono">00:00:00</div>
+            <p id="dkhp-status-desc" style="font-size: 12px; color: var(--text-secondary);">
+              Hãy nhập danh sách mã lớp và thời gian mở cổng rồi nhấn Bật Hẹn Giờ.
+            </p>
+          </div>
+
+          <div style="font-size: 12.5px; color: var(--text-secondary); display: flex; flex-direction: column; gap: 8px; line-height: 1.55;">
+            <strong style="color: var(--text-primary);">Cơ chế hoạt động chuẩn xác trên ĐKHP v2:</strong>
+            <p>1. Khi đồng hồ đếm về <span class="mono">00:00:00</span>, trình duyệt tự động mở trang <span class="mono">dkhp.uit.edu.vn/app/reg</span>.</p>
+            <p>2. Nếu phiên đăng nhập hết hạn, tiện ích tự động điền MSSV &amp; mật khẩu đã mã hóa để đăng nhập lại.</p>
+            <p>3. Tự động lọc và tích chọn toàn bộ cả lớp Lý thuyết lẫn lớp Thực hành đi kèm trong bảng TanStack Table và nhấn nút <strong>Đăng ký</strong>.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================================
+         TAB 6: TỰ ĐỘNG KHẢO SÁT GIẢNG DẠY (AUTO SURVEY)
+         =================================================================== -->
+    <section id="tab-survey" class="tab-pane">
+      <div class="page-header">
+        <div class="page-title-group">
+          <h1 class="page-title">Tự Động Khảo Sát Giảng Dạy</h1>
+          <p class="page-subtitle">Tự động điền biểu mẫu đánh giá môn học trên <span class="mono">portal.uit.edu.vn/sinh-vien/khao-sat-giang-day</span> và <span class="mono">survey.uit.edu.vn</span>.</p>
+        </div>
+      </div>
+
+      <div class="settings-grid">
+        <div class="panel-card">
+          <div class="panel-card-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m9 11 3 3L22 4"></path>
+              <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+            </svg>
+            <span>Mức Độ Đánh Giá Tiêu Chí</span>
+          </div>
+
+          <div class="radio-group-list">
+            <label class="radio-card">
+              <input type="radio" name="survey-rate" value="0">
+              <span>Mức 1 — Không hài lòng / Rất không đồng ý</span>
+            </label>
+            <label class="radio-card">
+              <input type="radio" name="survey-rate" value="1">
+              <span>Mức 2 — Phân vân / Bình thường</span>
+            </label>
+            <label class="radio-card">
+              <input type="radio" name="survey-rate" value="2">
+              <span>Mức 3 — Hài lòng / Đồng ý</span>
+            </label>
+            <label class="radio-card">
+              <input type="radio" name="survey-rate" value="3" checked>
+              <span>Mức 4 — Rất hài lòng / Hoàn toàn đồng ý (Khuyên dùng)</span>
+            </label>
+            <label class="radio-card">
+              <input type="radio" name="survey-rate" value="random">
+              <span>Ngẫu nhiên giữa Mức 3 và Mức 4</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="panel-card">
+          <div class="panel-card-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+            <span>Ý Kiến Đóng Góp Tự Động</span>
+          </div>
+
+          <div class="form-field">
+            <label for="survey-text-1">Câu hỏi mở 1 (Điều hài lòng về môn học / giảng viên)</label>
+            <textarea id="survey-text-1" class="textarea" rows="3">Không ý kiến</textarea>
+          </div>
+
+          <div class="form-field">
+            <label for="survey-text-2">Câu hỏi mở 2 (Đề xuất cải thiện môn học)</label>
+            <textarea id="survey-text-2" class="textarea" rows="3">Không ý kiến</textarea>
+          </div>
+
+          <div style="display: flex; gap: 10px; align-items: center;">
+            <button id="btn-save-survey" class="btn">Lưu Cấu Hình</button>
+            <button id="btn-start-survey" class="btn btn-primary" style="flex: 1;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+              </svg>
+              <span>Mở Portal &amp; Chạy Khảo Sát</span>
+            </button>
+          </div>
+          <span id="survey-save-msg" style="font-size: 12px; color: var(--success); display: none;">Đã lưu cấu hình khảo sát!</span>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- =====================================================================
+       MODAL 1: THÊM LỊCH HỌC NGOÀI VÀO TKB
+       ===================================================================== -->
+  <div id="modal-add-course" class="modal-backdrop">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <span class="modal-title">Thêm Lịch Học / Sự Kiện Cá Nhân</span>
+        <button id="btn-close-add-modal" class="btn btn-sm">Đóng</button>
+      </div>
+
+      <div class="form-field">
+        <label for="manual-title">Tên môn học hoặc sự kiện</label>
+        <input type="text" id="manual-title" class="input" placeholder="VD: Học tiếng Anh / Họp nhóm đồ án">
+      </div>
+
+      <div class="form-grid-2">
+        <div class="form-field">
+          <label for="manual-room">Phòng học / Địa điểm</label>
+          <input type="text" id="manual-room" class="input" placeholder="VD: B1.10 hoặc Online">
+        </div>
+        <div class="form-field">
+          <label for="manual-teacher">Giảng viên / Ghi chú</label>
+          <input type="text" id="manual-teacher" class="input" placeholder="Tùy chọn">
+        </div>
+      </div>
+
+      <div class="form-grid-2">
+        <div class="form-field">
+          <label for="manual-day">Thứ trong tuần</label>
+          <select id="manual-day" class="select">
+            <option value="2">Thứ 2</option>
+            <option value="3">Thứ 3</option>
+            <option value="4">Thứ 4</option>
+            <option value="5">Thứ 5</option>
+            <option value="6">Thứ 6</option>
+            <option value="7">Thứ 7</option>
+            <option value="8">Chủ Nhật</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label>Tiết bắt đầu — kết thúc</label>
+          <div style="display: flex; gap: 6px;">
+            <input type="number" id="manual-start-tiet" class="input mono" min="1" max="10" value="1" style="width: 100%;">
+            <input type="number" id="manual-end-tiet" class="input mono" min="1" max="10" value="3" style="width: 100%;">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-grid-2">
+        <div class="form-field">
+          <label for="manual-start-date">Từ ngày</label>
+          <input type="date" id="manual-start-date" class="input mono">
+        </div>
+        <div class="form-field">
+          <label for="manual-end-date">Đến ngày</label>
+          <input type="date" id="manual-end-date" class="input mono">
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button id="btn-cancel-manual" class="btn">Hủy</button>
+        <button id="btn-save-manual" class="btn btn-primary">Lưu Vào TKB</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =====================================================================
+       MODAL 2: CHI TIẾT BUỔI HỌC TRÊN TKB
+       ===================================================================== -->
+  <div id="modal-course-detail" class="modal-backdrop">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <span id="detail-modal-title" class="modal-title">Chi Tiết Môn Học</span>
+        <button id="btn-close-detail-modal" class="btn btn-sm">Đóng</button>
+      </div>
+
+      <div id="detail-modal-body" style="display: flex; flex-direction: column; gap: 10px; font-size: 13.5px;"></div>
+
+      <div class="modal-footer">
+        <button id="btn-delete-this-occurrence" class="btn btn-danger">Ẩn / Xóa Buổi Học Này</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =====================================================================
+       MODAL 3: THÊM LỊCH THI THỦ CÔNG
+       ===================================================================== -->
+  <div id="modal-add-exam" class="modal-backdrop">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <span class="modal-title">Thêm Lịch Thi Học Phần</span>
+        <button id="btn-close-exam-modal" class="btn btn-sm">Đóng</button>
+      </div>
+
+      <div class="form-grid-2">
+        <div class="form-field">
+          <label for="exam-input-malop">Mã lớp</label>
+          <input type="text" id="exam-input-malop" class="input mono" placeholder="VD: IT001.Q31">
+        </div>
+        <div class="form-field">
+          <label for="exam-input-phong">Phòng thi</label>
+          <input type="text" id="exam-input-phong" class="input mono" placeholder="VD: A106">
+        </div>
+      </div>
+
+      <div class="form-field">
+        <label for="exam-input-tenmh">Tên môn học</label>
+        <input type="text" id="exam-input-tenmh" class="input" placeholder="VD: Nhập môn lập trình">
+      </div>
+
+      <div class="form-grid-2">
+        <div class="form-field">
+          <label for="exam-input-ngay">Ngày thi (DD/MM/YYYY)</label>
+          <input type="text" id="exam-input-ngay" class="input mono" placeholder="VD: 15/06/2026">
+        </div>
+        <div class="form-field">
+          <label for="exam-input-ca">Ca thi / Giờ thi</label>
+          <input type="text" id="exam-input-ca" class="input mono" placeholder="VD: Ca 1 (07:30)">
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button id="btn-save-exam-manual" class="btn btn-primary">Lưu Lịch Thi</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =====================================================================
+       MODAL 4: TẠO MÔN TỰ DO TRONG XẾP LỚP
+       ===================================================================== -->
+  <div id="modal-custom-scheduler" class="modal-backdrop">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <span class="modal-title">Tạo Lớp Học Tự Do (Xếp Lớp)</span>
+        <button id="btn-close-custom-sched" class="btn btn-sm">Đóng</button>
+      </div>
+
+      <div class="form-grid-2">
+        <div class="form-field">
+          <label for="cs-mamh">Mã môn học</label>
+          <input type="text" id="cs-mamh" class="input mono" placeholder="VD: IT004">
+        </div>
+        <div class="form-field">
+          <label for="cs-malop">Mã lớp</label>
+          <input type="text" id="cs-malop" class="input mono" placeholder="VD: IT004.Q11">
+        </div>
+      </div>
+
+      <div class="form-field">
+        <label for="cs-tenmh">Tên môn học</label>
+        <input type="text" id="cs-tenmh" class="input" placeholder="VD: Cơ sở dữ liệu">
+      </div>
+
+      <div class="form-grid-2">
+        <div class="form-field">
+          <label for="cs-thu">Thứ</label>
+          <select id="cs-thu" class="select">
+            <option value="2">Thứ 2</option>
+            <option value="3">Thứ 3</option>
+            <option value="4">Thứ 4</option>
+            <option value="5">Thứ 5</option>
+            <option value="6">Thứ 6</option>
+            <option value="7">Thứ 7</option>
+            <option value="CN">Chủ Nhật</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label for="cs-tiet">Chuỗi tiết (VD: 123 hoặc 678)</label>
+          <input type="text" id="cs-tiet" class="input mono" placeholder="VD: 123">
+        </div>
+      </div>
+
+      <div class="form-grid-2">
+        <div class="form-field">
+          <label for="cs-phong">Phòng học</label>
+          <input type="text" id="cs-phong" class="input mono" placeholder="VD: B3.04">
+        </div>
+        <div class="form-field">
+          <label for="cs-gv">Giảng viên</label>
+          <input type="text" id="cs-gv" class="input" placeholder="Tên giảng viên">
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button id="btn-save-custom-sched" class="btn btn-primary">Thêm Vào Xếp Lớp</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../lib/xlsx.full.min.js"></script>
+  <script src="../lib/crypto.js"></script>
+  <script src="./dashboard.js"></script>
+</body>
+</html>
+
